@@ -16,10 +16,17 @@ from bs4 import BeautifulSoup
 import re
 from email.parser import Parser
 import whois
+import pyfiglet
+from termcolor import colored
 from tqdm import tqdm
 from datetime import datetime
+from pathlib import Path
 
-default_color = Colors.red
+
+default_color = Colors.cyan
+Head_Color = Colors.purple
+Exit_Color = Colors.yellow
+Error_Color = Colors.red
 
 API_KEY = "ENTER GOOGLE CUSTOM SEARCH API KEY HERE"
 CX = "ENTER GOOGLE CUSTOM SEARCH CX HERE"
@@ -32,6 +39,36 @@ def clear():
 def restart():
     Write.Input("\nPress Enter to return to the main menu...", default_color, interval=0)
     clear()
+
+def save_details(data,NameData):
+    try:
+        #Ensure its string
+        if not isinstance(data, str):
+                data = str(data)
+        
+        cwd = os.getcwd()
+        print(f"Current working directory is: {cwd}")
+
+        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        print(current_time)
+    
+        filename = f"Saves/{NameData}_{current_time}.txt"
+        print(f"the filename {filename}")
+        print(data)
+
+        # Define the file path
+        #file_path = Path(filename)
+
+        # Write data to the file
+        #file_path.write_text(data)
+
+        with open(filename, "w", encoding="utf-8") as file:
+            file.write(data)
+
+        Write.Print(f"\n {NameData} details saved to {filename}\n", Colors.green, interval=0)
+    except Exception as e:
+        #clear()
+        Write.Print(f"\n Error Saving {NameData} to file", default_color, interval=0)
 
 def get_ip_details(ip):
     try:
@@ -123,25 +160,30 @@ def ip_info(ip):
         loc = data.get('loc', 'None')
         maps_link = f"https://www.google.com/maps?q={loc}" if loc != 'None' else 'None'
 
-        ip_details = f"""
-╭─{' '*78}─╮
-|{' '*34} IP Details {' '*34}|
-|{'='*80}|
-| [+] > IP Address         || {data.get('ip', 'None'):<51}|
-| [+] > City               || {data.get('city', 'None'):<51}|
-| [+] > Region             || {data.get('region', 'None'):<51}|
-| [+] > Country            || {data.get('country', 'None'):<51}|
-| [+] > Postal/ZIP Code    || {data.get('postal', 'None'):<51}|
-| [+] > ISP                || {data.get('org', 'None'):<51}|
-| [+] > Latitude, Longitude|| {loc:<51}|
-| [+] > Timezone           || {data.get('timezone', 'None'):<51}|
-| [+] > Google Maps Location        || {maps_link:<51}|
-╰─{' '*24}─╯╰─{' '*50}─╯
+        ip_detailo = f"""
+╭─────────────────────────────────────────────────────────────────────────────╮
+│                                IP Details                                   │
+├─────────────────────────────────────────────────────────────────────────────┤
+│  IP Address           : {data.get('ip', 'None'):<51} │
+│  City                 : {data.get('city', 'None'):<51} │
+│  Region               : {data.get('region', 'None'):<51} │
+│  Country              : {data.get('country', 'None'):<51} │
+│  Postal/ZIP Code      : {data.get('postal', 'None'):<51} │
+│  ISP                  : {data.get('org', 'None'):<51} │
+│  Latitude, Longitude  : {loc:<51} │
+│  Timezone             : {data.get('timezone', 'None'):<51} │
+│  Google Maps Location : {maps_link:<51} │
+╰────────────────────────────────────────────────────────────────────────────╯
 """
-        Write.Print(ip_details, Colors.white, interval=0)
+        Write.Print(ip_detailo, Colors.white, interval=0)
 
-    except:
-        clear()
+        # Ask the user if they want to save the details to a file
+        #save_choice = Write.Input("\n[?] > Do you want to save these details to a file? (y/n): ", default_color, interval=0).strip().lower()
+        #if save_choice == 'y':
+        save_details(ip_detailo, "IP_address")
+
+    except Exception as e:
+        #clear()
         Write.Print("\n[!] > Error retrieving IP address info.", default_color, interval=0)
 
     restart()
@@ -828,10 +870,8 @@ def check_password_strength(password):
     else:
         return "Strong password"
 
-def password_strength_tool():
-    clear()
-    Write.Print("[!] > Enter password to evaluate strength:\n", default_color, interval=0)
-    password = Write.Input("[?] >  ", default_color, interval=0)
+def password_strength_tool(password=None):
+    clear() 
     if not password:
         clear()
         Write.Print("[!] > Password cannot be empty Please enter the password.\n", default_color, interval=0)
@@ -910,13 +950,12 @@ def generate_html_report(username, found_sites):
     with open(f"username_check_report_{username}.html", "w") as report_file:
         report_file.write(html_content)
 
-def username_check():
+def username_check(username=None):
     clear()
-    Write.Print("[!] > Conducting Username Check...\n", default_color, interval=0)
-    username = Write.Input("[?] > Enter the username: ", default_color, interval=0).strip()
+   
     if not username:
         clear()
-        Write.Print("[!] > No username provided.\n", Colors.red, interval=0)
+        Write.Print("[!] > No username provided.\n", Error_Color, interval=0)
         restart()
         return
 
@@ -1019,9 +1058,7 @@ def reverse_phone_lookup(phone_number):
     Write.Print(info_text, Colors.white, interval=0)
     restart()
 
-# ----------------------------
-# NEW FEATURE 1: SSL Certificate Information
-# ----------------------------
+
 def check_ssl_cert(domain):
     """
     Fetch SSL certificate information for a given domain using Python's
@@ -1065,9 +1102,7 @@ def check_ssl_cert(domain):
 
     restart()
 
-# ----------------------------
-# NEW FEATURE 2: robots.txt & sitemap.xml
-# ----------------------------
+
 def check_robots_and_sitemap(domain):
     """
     Attempt to retrieve robots.txt and sitemap.xml from the target domain
@@ -1113,9 +1148,7 @@ def check_robots_and_sitemap(domain):
     Write.Print(result_text, Colors.white, interval=0)
     restart()
 
-# ----------------------------
-# NEW FEATURE 3: Simple DNSBL Check
-# ----------------------------
+
 def check_dnsbl(ip_address):
     """
     Checks whether an IP is listed in common DNS blacklists (DNSBLs).
@@ -1162,9 +1195,7 @@ def check_dnsbl(ip_address):
     Write.Print(report, Colors.white, interval=0)
     restart()
 
-# ----------------------------
-# NEW FEATURE 4: Webpage Metadata Extraction
-# ----------------------------
+
 def fetch_webpage_metadata(url):
     """
     Fetch webpage metadata like <title>, meta description, and keywords.
@@ -1202,44 +1233,53 @@ def fetch_webpage_metadata(url):
 
     restart()
 
+
+
+
 def main():
     while True:
         try:
             clear()
-            print("\033[1;31m   ██████╗██╗        █████╗ ████████╗███████╗")
-            print("   ██╔════╝██║       ██╔══██╗╚══██╔══╝██╔════╝")
-            print("   ██║     ██║       ███████║   ██║   ███████╗")
-            print("   ██║     ██║       ██╔══██║   ██║   ╚════██║")
-            print("   ██████╗ ███████╗  ██║  ██║   ██║   ███████║")
-            print("   ╚═════╝ ╚══════╝  ╚═╝  ╚═╝   ╚═╝   ╚══════╝\033[0m")
-            print("\033[1;34mC       L      A       T       S       C       O       P       E\033[0m   \033[1;31m(Version 1.00)\033[0m")
-            author = "By Josh Clatney - Ethical Pentesting Enthusiast 🛡️"
-            Write.Print(author + "\n[C.I.T]\nClatScope Info Tool\n", Colors.white, interval=0)
+            
+            T = "OLA" #input("Enter Text you want to convert to ASCII art : ")
+            P = "MIDE"
+            ASCII_art_1 = pyfiglet.figlet_format(T, font='isometric1')
+            colored_ASCII_art_1 = colored(ASCII_art_1, 'green')  # Change 'cyan' to any color you prefer
+            ASCII_art_2 = pyfiglet.figlet_format(P, font='isometric1')
+            colored_ASCII_art_2 = colored(ASCII_art_2, 'green')  # Change 'cyan' to any color you prefer
 
-            menu = """╭─    ─╮╭─                   ─╮╭─                                             ─╮
-|  №   ||      Function       ||                  Description                  
-|======||=====================||===============================================
-| [1]  || IP Address Search   || Retrieves IP address info             
-| [2]  || Deep Account Search || Retrieves profiles from various websites     
-| [3]  || Phone Search        || Retrieves phone number info           
-| [4]  || DNS Search          || Retrieves DNS records (A, CNAME, MX, NS)     
-| [5]  || Email Search        || Retrieves MX info for an email               
-| [6]  || Person Name Search  || Retrieves extensive person-related data      
-| [7]  || Reverse DNS Search  || Retrieves PTR records for an IP address      
-| [8]  || Email Header Search || Retrieves info from an email header          
-| [9]  || Email Breach Search || Retreives email data breach info (HIBP)      
-| [10] || WHOIS Search        || Retrieves domain registration data           
-| [11] || Password Analyzer   || Retrieves password strength rating           
-| [12] || Username Search     || Retrieves usernames from online accounts     
-| [13] || Reverse Phone Search|| Retrieves references to a phone number
-| [14] || SSL Cert Search     || Retrieves basic SSL certificate details       
-| [15] || Robots.txt/Sitemap  || Retrieves robots.txt & sitemap.xml info
-| [16] || DNSBL Check         || Retrieves IPDNS blacklist info   
-| [17] || Web Metadata Info   || Retrieves meta tags and more from a webpage 
-|------||---------------------||-----------------------------------------------
-| [0]  || Exit                || Exit the program                             
-| [99] || Settings            || Customize tool                               
-╰─    ─╯╰─                   ─╯╰─                                             ─╯
+            print(colored_ASCII_art_1)
+            #print("\n")
+            print(colored_ASCII_art_2)
+                  
+            author = "🛡️ By Olamide Owolabi - Hello World! 🛡️"
+            Write.Print(author + "\n[C.I.T]\n OSint Info Tool\n", Colors.white, interval=0)
+
+            menu = """
+╔════════════════════════════════════════════════════════════════════════════╗
+║  №   │      Function          │ Description                                ║
+╠══════╪════════════════════════╪════════════════════════════════════════════╣
+║ [1]  │ IP Address Search      │ Retrieves IP address info                  ║
+║ [2]  │ Deep Account Search    │ Retrieves profiles from various websites   ║
+║ [3]  │ Phone Search           │ Retrieves phone number info                ║
+║ [4]  │ DNS Search             │ Retrieves DNS records (A, CNAME, MX, NS)   ║
+║ [5]  │ Email Search           │ Retrieves MX info for an email             ║
+║ [6]  │ Person Name Search     │ Retrieves extensive person-related data    ║
+║ [7]  │ Reverse DNS Search     │ Retrieves PTR records for an IP address    ║
+║ [8]  │ Email Header Search    │ Retrieves info from an email header        ║
+║ [9]  │ Email Breach Search    │ Retrieves email data breach info (HIBP)    ║
+║ [10] │ WHOIS Search           │ Retrieves domain registration data         ║
+║ [11] │ Password Analyzer      │ Retrieves password strength rating         ║
+║ [12] │ Username Search        │ Retrieves usernames from online accounts   ║
+║ [13] │ Reverse Phone Search   │ Retrieves references to a phone number     ║
+║ [14] │ SSL Cert Search        │ Retrieves basic SSL certificate details    ║
+║ [15] │ Robots.txt/Sitemap     │ Retrieves robots.txt & sitemap.xml info    ║
+║ [16] │ DNSBL Check            │ Retrieves IPDNS blacklist info             ║
+║ [17] │ Web Metadata Info      │ Retrieves meta tags and more from a webpage║
+╠══════╪════════════════════════╪════════════════════════════════════════════╣
+║ [0]  │ Exit                   │ Exit the program                           ║
+║ [99] │ Settings               │ Customize tool                             ║
+╚════════════════════════════════════════════════════════════════════════════╝
 """
             Write.Print(menu, Colors.white, interval=0)
 
@@ -1247,26 +1287,50 @@ def main():
 
             if choice == "1":
                 clear()
-                ip = Write.Input("[?] > IP-Address: ", default_color, interval=0)
+                Write.Print("IP Address Search \n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                Write.Print("Press 0 and enter to cancel \n", Exit_Color, interval=0)
+                ip = Write.Input("Please enter IP-Address: " , default_color, interval=0)
+
+                if ip == "0":
+                    clear()
+                    continue
+
                 if not ip:
                     clear()
-                    Write.Print("[!] > Enter IP Address\n", default_color, interval=0)
+                    Write.Print("[!] > Enter IP Address\n", Error_Color, interval=0)
                     continue
                 ip_info(ip)
 
             elif choice == "2":
                 clear()
-                nickname = Write.Input("[?] > Username: ", default_color, interval=0)
+                Write.Print("Username Account Search \n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                nickname = Write.Input("Enter a Username or Press 0 and enter to cancel: ", default_color, interval=0)
+                
                 Write.Print("[!] > Conducting deep account search...\n", default_color, interval=0)
+
+                if nickname == "0":
+                    clear()
+                    continue
+
                 if not nickname:
                     clear()
-                    Write.Print("[!] > Enter username\n", default_color, interval=0)
+                    Write.Print("[!] > Enter username\n", Error_Color, interval=0)
                     continue
                 deep_account_search(nickname)
 
             elif choice == "3":
                 clear()
-                phone_number = Write.Input("[?] > Phone number: ", default_color, interval=0)
+                Write.Print("Phone Number Search \n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                phone_number = Write.Input("Enter a valid Phone number Or Press \n"+
+                                            "'0' and enter to cancel: ", default_color, interval=0)
+                
+                if phone_number == "0":
+                   clear()
+                   continue
+
                 if not phone_number:
                     clear()
                     Write.Print("[!] > Enter phone number\n", default_color, interval=0)
@@ -1275,7 +1339,15 @@ def main():
 
             elif choice == "4":
                 clear()
-                domain = Write.Input("[?] > Domain: ", default_color, interval=0)
+                Write.Print("Domain Search \n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                domain = Write.Input("Enter Domain \n "
+                                     + " Or Press 0 and enter to cancel ", default_color, interval=0)
+                
+                if domain == "0":
+                   clear()
+                   continue
+
                 if not domain:
                     clear()
                     Write.Print("[!] > Enter domain\n", default_color, interval=0)
@@ -1285,7 +1357,16 @@ def main():
 
             elif choice == "5":
                 clear()
-                email = Write.Input("[?] > Email: ", default_color, interval=0)
+                Write.Print("Email Search \n", Head_Color, interval=0)
+
+                Write.Print("\n", Head_Color, interval=0) 
+                email = Write.Input("Enter a valid Email or Press '0' and enter to cancel ", default_color, interval=0)
+
+                if email == "0":
+                   clear()
+                   Write.Print("[!] > Operation cancelled.\n", Error_Color, interval=0)
+                   continue
+
                 if not email:
                     clear()
                     Write.Print("[!] > Enter email\n", default_color, interval=0)
@@ -1294,9 +1375,22 @@ def main():
 
             elif choice == "6":
                 clear()
+                Write.Print("Person Search with location \n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0)
+                Write.Print("Press 'O' and enter to cancel", default_color, interval=0)
+
+                Write.Print("\n", Head_Color, interval=0)
+
+               
                 first_name = Write.Input("[?] > First Name: ", default_color, interval=0)
                 last_name = Write.Input("[?] > Last Name: ", default_color, interval=0)
                 city = Write.Input("[?] > City/Location: ", default_color, interval=0)
+
+                if "0" in [first_name, last_name, city]:
+                    clear()
+                    continue
+
+
                 if not first_name or not last_name:
                     clear()
                     Write.Print("[!] > Enter first and last name\n", default_color, interval=0)
@@ -1306,7 +1400,17 @@ def main():
 
             elif choice == "7":
                 clear()
-                ip = Write.Input("[?] > IP Address for Reverse DNS: ", default_color, interval=0)
+                Write.Print("Reverse DNS Search \n", Head_Color, interval=0)
+
+                Write.Print("\n", Head_Color, interval=0) 
+
+                ip = Write.Input("Enter IP Address for Reverse DNS or \n"
+                                  + "Press 0 and enter to cancel", default_color, interval=0)
+                
+                if ip == "0":
+                   clear()
+                   continue
+
                 if not ip:
                     clear()
                     Write.Print("[!] > Enter IP address\n", default_color, interval=0)
@@ -1315,10 +1419,18 @@ def main():
 
             elif choice == "8":
                 clear()
-                Write.Print("[!] > Paste the raw email headers below (end with an empty line):\n", default_color, interval=0)
+                Write.Print("Email Header Search \n", Head_Color, interval=0)
+
+                Write.Print("\n", Head_Color, interval=0) 
+                Write.Print(" Paste the raw email headers below (end with an empty line):\n", default_color, interval=0)
+                Write.Print("Or Press 0 and enter to cancel:\n", default_color, interval=0)
                 lines = []
                 while True:
                     line = input()
+                    if line.strip() == "0":
+                        clear()
+                        Write.Print("[!] > Operation cancelled.\n", Error_Color, interval=0)
+                        break
                     if not line.strip():
                         break
                     lines.append(line)
@@ -1331,7 +1443,15 @@ def main():
 
             elif choice == "9":
                 clear()
-                email = Write.Input("[?] > Email for breach check: ", default_color, interval=0)
+                Write.Print("Email Breach Check\n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                email = Write.Input("Enter an Email to check if breached \n"
+                                    +"Or Press 0 and enter to cancel", default_color, interval=0)
+
+                if email == "0":
+                     clear()
+                     Write.Print("[!] > Operation cancelled.\n", Error_Color, interval=0)
+                     continue
                 if not email:
                     clear()
                     Write.Print("[!] > Enter email\n", default_color, interval=0)
@@ -1340,7 +1460,14 @@ def main():
 
             elif choice == "10":
                 clear()
-                domain = Write.Input("[?] > Domain for WHOIS lookup: ", default_color, interval=0)
+                Write.Print("Domain for WHOIS lookup\n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                domain = Write.Input("Enter a Domain pr Press 0 to Cancel ", default_color, interval=0)
+
+                if domain == "0":
+                    clear()
+                    continue
+
                 if not domain:
                     clear()
                     Write.Print("[!] > Enter a domain\n", default_color, interval=0)
@@ -1348,26 +1475,60 @@ def main():
                 whois_lookup(domain)
 
             elif choice == "11":
-                password_strength_tool()
+                password = Write.Input("[!] > Enter password to evaluate strength or press 0 to cancel:\n", default_color, interval=0)
+                if password == "0":
+                    clear()
+                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                else:
+                 password_strength_tool(password)
 
             elif choice == "12":
                 clear()
-                Write.Print("[!] > Conducting Username Check...\n", default_color, interval=0)
-                username_check()
+                Write.Print("Username Check\n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                usernam =  Write.Print("Enter Username to search \n"
+                                      +"Or Press 0 and enter to cancel ", default_color, interval=0)
+                
+                if usernam == "0":
+                    clear()
+                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    continue
+
+                username_check(usernam.strip())
 
             elif choice == "13":
                 clear()
-                phone_number = Write.Input("[?] > Phone number to reverse lookup: ", default_color, interval=0)
+                Write.Print("Phone Number reverse Lookup\n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+
+                phone_number = Write.Input("Enter Phone number or Press 0 and enter to cancel ", default_color, interval=0)
+                
+                if phone_number == "0":
+                    clear()
+                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    continue
+                
                 if not phone_number:
                     clear()
                     Write.Print("[!] > Enter phone number\n", default_color, interval=0)
                     continue
                 reverse_phone_lookup(phone_number)
 
-            # NEW FEATURES
+            
             elif choice == "14":
                 clear()
-                domain = Write.Input("[?] > Domain for SSL check: ", default_color, interval=0)
+                Write.Print("SSL Certificate Search\n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                Write.Print("Press '0' and enter to cancel\n", default_color, interval=0)
+
+
+                domain = Write.Input("Enter Domain for SSL check: ", default_color, interval=0)
+
+                if domain == "0":
+                    clear()
+                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    continue
+
                 if not domain:
                     clear()
                     Write.Print("[!] > Enter a domain\n", default_color, interval=0)
@@ -1376,7 +1537,17 @@ def main():
 
             elif choice == "15":
                 clear()
-                domain = Write.Input("[?] > Domain to check for robots.txt & sitemap: ", default_color, interval=0)
+                Write.Print("Robot text lookup and Sitemap \n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                Write.Print("Press '0' and enter to cancel\n", default_color, interval=0)
+
+                domain = Write.Input("Enter Domain to check for robots.txt & sitemap: ", default_color, interval=0)
+                
+                if domain == "0":
+                    clear()
+                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    continue
+                
                 if not domain:
                     clear()
                     Write.Print("[!] > Enter a domain\n", default_color, interval=0)
@@ -1385,7 +1556,16 @@ def main():
 
             elif choice == "16":
                 clear()
-                ip_address = Write.Input("[?] > IP address to check DNSBL: ", default_color, interval=0)
+                Write.Print("DNSBL Check \n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                Write.Print("Press '0' and enter to cancel\n", default_color, interval=0)
+                ip_address = Write.Input("Enter IP address to check DNSBL: ", default_color, interval=0)
+
+                if ip_address == "0":
+                    clear()
+                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    continue
+
                 if not ip_address:
                     clear()
                     Write.Print("[!] > Enter an IP address\n", default_color, interval=0)
@@ -1394,7 +1574,16 @@ def main():
 
             elif choice == "17":
                 clear()
+                Write.Print("Web Metadata Info \n", Head_Color, interval=0)
+                Write.Print("\n", Head_Color, interval=0) 
+                Write.Print("Press '0' and enter to cancel\n", default_color, interval=0)
+
                 url = Write.Input("[?] > URL for metadata extraction: ", default_color, interval=0)
+                if url == "0":
+                    clear()
+                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    continue
+
                 if not url:
                     clear()
                     Write.Print("[!] > Enter a URL\n", default_color, interval=0)
@@ -1403,7 +1592,7 @@ def main():
 
             elif choice == "0":
                 clear()
-                Write.Print("\n[!] > Exiting...", default_color, interval=0)
+                Write.Print("\n[!] > Exiting...", Error_Color, interval=0)
                 exit()
 
             elif choice == "99":
@@ -1411,11 +1600,11 @@ def main():
 
             else:
                 clear()
-                Write.Print("[!] > Invalid input.\n", default_color, interval=0)
+                Write.Print("[!] > Invalid input.\n", Error_Color, interval=0)
 
         except KeyboardInterrupt:
             clear()
-            Write.Print("[!] > Exiting on user request...\n", default_color, interval=0)
+            Write.Print("[!] > Exiting on user request...\n", Error_Color, interval=0)
             exit()
 
 def settings():
@@ -1429,8 +1618,8 @@ def settings():
             print("   ██████╗ ███████╗  ██║  ██║   ██║   ███████║")
             print("   ╚═════╝ ╚══════╝  ╚═╝  ╚═╝   ╚═╝   ╚══════╝\033[0m")
             print("\033[1;34mC       L      A       T       S       C       O       P       E\033[0m   \033[1;31m(Version 1.0.0)\033[0m")
-            author = "🛡️ By Josh Clatney - Ethical Pentesting Enthusiast 🛡️"
-            Write.Print(author + "\n[C.I.T]\nClatScope Info Tool\n", Colors.white, interval=0)
+            author = "🛡️ By Olamide Owolabi - Hello World! 🛡️"
+            Write.Print(author + "\n[C.I.T]\nClatScope Info Tool\n", Colors.yellow, interval=0)
 
             settings_menu = """╭─    ─╮╭─                   ─╮╭─                                         ─╮
 |  №   ||       Setting       ||                Description                |
