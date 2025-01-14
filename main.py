@@ -179,7 +179,7 @@ def ip_info(ip):
 """
         Write.Print(ip_detailo, Colors.white, interval=0)
 
-        # Ask the user if they want to save the details to a file
+        
         save_choice = Write.Input("\n[?] > Do you want to save these details to a file? (y/n): ", default_color, interval=0).strip().lower()
         if save_choice == 'y':
             save_details(ip_detailo, "IP_address")
@@ -211,269 +211,36 @@ def fetch_social_urls(urls, title):
             return f"\u2718 > {url:<50}|| Unexpected error"
 
     result_str = f"""
-╭─{' '*78}─╮
-|{' '*27}{title}{' '*27}|
+
+|{' '*27}{title}{' '*35}|
 |{'='*80}|
 """
     with ThreadPoolExecutor() as executor:
         results = list(executor.map(check_url, urls))
-    for result in results:
+    
+    found = [result for result in results if "Found" in result]
+    not_found = [result for result in results if "Found" not in result]
+    sorted_results = found + not_found
+
+    for result in sorted_results:
         result_str += f"| {result:<78} |\n"
     result_str += f"╰─{' '*78}─╯"
     return result_str
 
+def load_sites_from_file():
+    """Load sites from a text file, each line representing a URL pattern."""
+    try:
+        file_path ="AccountSearch/list.txt"
+        with open(file_path, 'r', encoding='utf-8') as file:
+            sites = [line.strip() for line in file if line.strip()]
+        return sites
+    except FileNotFoundError:
+        print(f"Error: {file_path} not found.")
+        return []
+    
 def deep_account_search(nickname):
-    sites = [
-        "https://google.com/{}",
-        "https://youtube.com/@{}",
-        "https://facebook.com/{}",
-        "https://wikipedia.org/wiki/User:{}",
-        "https://instagram.com/{}",
-        "https://reddit.com/user/{}",
-        "https://{}.tumblr.com",
-        "https://medium.com/@{}",
-        "https://www.quora.com/profile/{}",
-        "https://bing.com/{}",
-        "https://x.com/{}",
-        "https://yandex.ru/{}",
-        "https://whatsapp.com/{}",
-        "https://yahoo.com/{}",
-        "https://amazon.com/{}",
-        "https://duckduckgo.com/{}",
-        "https://yahoo.co.jp/{}",
-        "https://tiktok.com/@{}",
-        "https://msn.com/{}",
-        "https://netflix.com/{}",
-        "https://weather.com/{}",
-        "https://live.com/{}",
-        "https://naver.com/{}",
-        "https://microsoft.com/{}",
-        "https://twitch.tv/{}",
-        "https://office.com/{}",
-        "https://vk.com/{}",
-        "https://pinterest.com/{}",
-        "https://discord.com/{}",
-        "https://aliexpress.com/{}",
-        "https://github.com/{}",
-        "https://adobe.com/{}",
-        "https://rakuten.co.jp/{}",
-        "https://ikea.com/{}",
-        "https://bbc.co.uk/{}",
-        "https://amazon.co.jp/{}",
-        "https://speedtest.net/{}",
-        "https://samsung.com/{}",
-        "https://healthline.com/{}",
-        "https://medlineplus.gov/{}",
-        "https://roblox.com/users/{}/profile",
-        "https://cookpad.com/{}",
-        "https://indiatimes.com/{}",
-        "https://mercadolivre.com.br/{}",
-        "https://britannica.com/{}",
-        "https://merriam-webster.com/{}",
-        "https://hurriyet.com.tr/{}",
-        "https://steamcommunity.com/id/{}",
-        "https://booking.com/{}",
-        "https://support.google.com/{}",
-        "https://bbc.com/{}",
-        "https://playstation.com/{}",
-        "https://ebay.com/usr/{}",
-        "https://poki.com/{}",
-        "https://nike.com/{}",
-        "https://walmart.com/{}",
-        "https://medicalnewstoday.com/{}",
-        "https://gov.uk/{}",
-        "https://nhs.uk/{}",
-        "https://detik.com/{}",
-        "https://cricbuzz.com/{}",
-        "https://nih.gov/{}",
-        "https://uol.com.br/{}",
-        "https://ilovepdf.com/{}",
-        "https://clevelandclinic.org/{}",
-        "https://cnn.com/{}",
-        "https://globo.com/{}",
-        "https://nytimes.com/{}",
-        "https://taboola.com/{}",
-        "https://pornhub.com/users/{}",
-        "https://redtube.com/users/{}",
-        "https://xnxx.com/profiles/{}",
-        "https://brazzers.com/profile/{}",
-        "https://xhamster.com/users/{}",
-        "https://onlyfans.com/{}",
-        "https://xvideos.es/profiles/{}",
-        "https://xvideos.com/profiles/{}",
-        "https://chaturbate.com/{}",
-        "https://redgifs.com/users/{}",
-        "https://tinder.com/{}",
-        "https://pof.com/{}",
-        "https://match.com/{}",
-        "https://eharmony.com/{}",
-        "https://bumble.com/{}",
-        "https://okcupid.com/{}",
-        "https://Badoo.com/{}",
-        "https://dating.com/{}",
-        "https://trello.com/{}",
-        "https://mapquest.com/{}",
-        "https://zoom.com/{}",
-        "https://apple.com/{}",
-        "https://dropbox.com/{}",
-        "https://weibo.com/{}",
-        "https://wordpress.com/{}",
-        "https://cloudflare.com/{}",
-        "https://salesforce.com/{}",
-        "https://fandom.com/{}",
-        "https://paypal.com/{}",
-        "https://soundcloud.com/{}",
-        "https://forbes.com/{}",
-        "https://theguardian.com/{}",
-        "https://hulu.com/{}",
-        "https://stackoverflow.com/users/{}",
-        "https://businessinsider.com/{}",
-        "https://huffpost.com/{}",
-        "https://booking.com/{}",
-        "https://bleacherreport.com/{}",
-        "https://pastebin.com/u/{}",
-        "https://producthunt.com/@{}",
-        "https://pypi.org/user/{}",
-        "https://slideshare.com/{}",
-        "https://strava.com/athletes/{}",
-        "https://tldrlegal.com/{}",
-        "https://t.me/{}",
-        "https://last.fm/user{}",
-        "https://data.typeracer.com/pit/profile?user={}",
-        "https://tryhackme.com/p/{}",
-        "https://trakt.tv/users/{}",
-        "https://scratch.mit.edu/users/{}",
-        "https://replit.com?{}",
-        "https://hackaday.io/{}",
-        "https://freesound.org/people{{",
-        "https://hub.docker.com/u/{}",
-        "https://disqus.com/{}",
-        "https://www.codecademy.com/profiles/{}",
-        "https://www.chess.com/member/{}",
-        "https://bitbucket.org/{}",
-        "https://www.twitch.tv?{}",
-        "https://wikia.com/wiki/User:{}",
-        "https://steamcommunity.com/groups{}",
-        "https://keybase.io?{}",
-        "http://en.gravatar.com/{}",
-        "https://vk.com/{}",
-        "https://deviantart.com/{}",
-        "https://www.behance.net/{}",
-        "https://vimeo.com/{}:",
-        "https://www.youporn.com/user/{}",
-        "https://profiles.wordpress.org/{}",
-        "https://vimeo.com/{}",
-        "https://tryhackme.com/p/{}",
-        "https://www.scribd.com/{}",
-        "https://myspace.com/{}",
-        "https://genius.com/{}",
-        "https://genius.com/artists/{}",
-        "https://www.flickr.com/people/{}",
-        "https://www.fandom.com/u/{}",
-        "https://www.chess.com/member/{}",
-        "https://buzzfeed.com/{}",
-        "https://www.buymeacoffee.com/{}",
-        "https://about.me/{}",
-        "https://discussions.apple.com/profile/{}",
-        "https://giphy.com/{}",
-        "https://scholar.harvard.edu/{}",
-        "https://www.instructables.com/member/{}",
-        "http://www.wikidot.com/user:info/{}",
-        "https://www.youporn.com/user/{}",
-        "https://account.xbox.com/en-us/profile?gamertag={}",
-        "https://profiles.wordpress.org/{}",
-        "https://vimeo.com/{}",
-        "https://tryhackme.com/p/{}",
-        "https://torrentgalaxy.to/profile/{}",
-        "https://www.scribd.com/{}",
-        "https://myspace.com/{}",
-        "https://hackerone.com/{}",
-        "https://www.hackerearth.com/@{}",
-        "https://genius.com/{}",
-        "https://genius.com/artists/{}",
-        "https://www.flickr.com/people/{}",
-        "https://www.fandom.com/u/{}",
-        "https://www.chess.com/member/{}",
-        "https://buzzfeed.com/{}",
-        "https://www.buymeacoffee.com/{}",
-        "https://about.me/{}",
-        "https://discussions.apple.com/profile/{}",
-        "https://archive.org/details/@{}",
-        "https://giphy.com/{}",
-        "https://scholar.harvard.edu/{}",
-        "https://www.instructables.com/member/{}",
-        "http://www.wikidot.com/user:info/{}",
-        "https://dribbble.com/{}",
-        "https://500px.com/{}",
-        "https://{}.blogspot.com",
-        "https://{}.wordpress.com",
-        "https://disqus.com/by/{}",
-        "https://steamcommunity.com/id{}",
-        "https://{}.livejournal.com",
-        "https://www.codecademy.com/profiles/{}",
-        "https://www.khanacademy.org/profile/{}",
-        "https://bitbucket.org/{}/",
-        "https://sourceforge.net/u/{}/profile/",
-        "https://www.gog.com/u/{}",
-        "https://www.dailymotion.com/{}",
-        "https://myanimelist.net/profile/{}",
-        "https://archiveofourown.org/users/{}",
-        "https://www.slideshare.net/{}",
-        "https://letterboxd.com/{}/",
-        "https://runkeeper.com/{}/profile",
-        "https://www.mapmyrun.com/profile/{}",
-        "https://patreon.com/{}",
-        "https://{}.bandcamp.com",
-        "https://www.producthunt.com/@{}",
-        "https://about.me/{}",
-        "https://www.scribd.com/{}",
-        "https://www.mixcloud.com/{}/",
-        "https://keybase.io/{}",
-        "https://www.houzz.com/user/{}",
-        "https://www.couchsurfing.com/people{}",
-        "https://mix.com/{}",
-        "https://medium.com/@{}",
-        "https://getpocket.com/@{}",
-        "https://www.instructables.com/member/{}/",
-        "https://colorlib.com/author{}/",
-        "https://en.gravatar.com/{}",
-        "https://www.kaggle.com/{}",
-        "https://replit.com/@{}",
-        "https://scratch.mit.edu/users/{}/",
-        "https://www.alik.cz/u/{}",
-        "https://www.munzee.com/m/{}",
-        "https://boardgamegeek.com/user/{}",
-        "https://ok.ru/{}",
-        "https://www.youporn.com/user/{}",
-        "https://account.xbox.com/en-us/profile?gamertag={}",
-        "https://profiles.wordpress.org/{}",
-        "https://vimeo.com/{}",
-        "https://tryhackme.com/p/{}",
-        "https://torrentgalaxy.to/profile/{}",
-        "https://www.scribd.com/{}",
-        "https://www.patreon.com/{}",
-        "https://myspace.com/{}",
-        "https://genius.com/{}",
-        "https://genius.com/artists/{}",
-        "https://www.flickr.com/people/{}",
-        "https://www.fandom.com/u/{}",
-        "https://www.chess.com/member/{}",
-        "https://buzzfeed.com/{}",
-        "https://www.buymeacoffee.com/{}",
-        "https://about.me/{}",
-        "https://discussions.apple.com/profile/{}",
-        "https://archive.org/details/@{}",
-        "https://giphy.com/{}",
-        "https://scholar.harvard.edu/{}",
-        "https://www.instructables.com/member/{}",
-        "http://www.wikidot.com/user:info/{}",
-        "https://erome.com/{}",
-        "https://www.alik.cz/u/{}",
-        "https://rblx.trade/p/{}",
-        "https://www.paypal.com/paypalme/{}",
-        "https://hackaday.io/{}",
-        "https://connect.garmin.com/modern/profile/{}",
-    ]
+    sites = load_sites_from_file()
+
     urls = []
     for site_format in sites:
         if '{}' in site_format:
@@ -484,6 +251,10 @@ def deep_account_search(nickname):
 
     search_results = fetch_social_urls(urls, "Deep Account Search")
     Write.Print(search_results, Colors.white, interval=0)
+    save_choice = Write.Input("\n[?] > Do you want to save these details to a file? (y/n): ", default_color, interval=0).strip().lower()
+    if save_choice == 'y':
+        save_details(search_results, "Account_Search")
+
     restart()
 
 def phone_info(phone_number):
