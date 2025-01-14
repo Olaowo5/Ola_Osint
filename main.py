@@ -28,17 +28,31 @@ Head_Color = Colors.purple
 Exit_Color = Colors.yellow
 Error_Color = Colors.red
 
-API_KEY = "ENTER GOOGLE CUSTOM SEARCH API KEY HERE"
-CX = "ENTER GOOGLE CUSTOM SEARCH CX HERE"
-CLIENT_ID = "ENTER GOOGLE CUSTOM SEARCH CLIENT ID HERE"
+API_KEY = "AIzaSyAondv81wJMIhlMnUzmhsPJcw70CYsHAPM" #"ENTER GOOGLE CUSTOM SEARCH API KEY HERE"
+CX = "509f2c6d7178d43ea"  #"ENTER GOOGLE CUSTOM SEARCH CX HERE"
+
 HIBP_API_KEY = "ENTER HAVE I BEEN PWNED API KEY HERE"
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
 
+def press_zero():
+     Write.Print("\n \u26A0  Press 0 and enter to cancel \n", Exit_Color, interval=0)
+     Write.Print("\n", Exit_Color, interval=0)
+
+def zero_pressed():
+     Write.Print(" \U0001F438 Operation cancelled.\n", Error_Color, interval=0)
+
+
+
+
 def restart():
-    Write.Input("\nPress Enter to return to the main menu...", default_color, interval=0)
+    Write.Input("\n 🐘 Press Enter to return to the main menu...", default_color, interval=0)
     clear()
+
+def save_message():
+    save_choice = Write.Input("\n \U0001F98B Do you want to save these details to a file? (y/n): ", default_color, interval=0).strip().lower()
+    return save_choice
 
 def save_details(data,NameData):
     try:
@@ -67,10 +81,10 @@ def save_details(data,NameData):
         with open(filename, "w", encoding="utf-8") as file:
             file.write(data)
 
-        Write.Print(f"\n {NameData} details saved to {filename}\n", Colors.green, interval=0)
+        Write.Print(f"\n \U0001F989 {NameData} details saved to {filename}\n", Colors.green, interval=0)
     except Exception as e:
         #clear()
-        Write.Print(f"\n Error Saving {NameData} to file", default_color, interval=0)
+        Write.Print(f"\n \u2620 Error Saving {NameData} to file", default_color, interval=0)
 
 def get_ip_details(ip):
     try:
@@ -79,6 +93,40 @@ def get_ip_details(ip):
         return response.json()
     except:
         return None
+
+def fetch_page_text(url, max_length=500):
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+    }
+    try:
+        print(f"Fetching content from {url}")
+        resp = requests.get(url, headers=headers, timeout=20)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "lxml")
+
+        # Remove unnecessary tags
+        for tag_name in ["header", "footer", "nav", "aside", "script", "style", "noscript", "form"]:
+            for t in soup.find_all(tag_name):
+                t.decompose()
+
+        # Extract text and truncate
+        text = soup.get_text(separator=' ')
+        text = ' '.join(text.split())
+        truncated_text = text[:max_length]  # Truncate the text to desired length
+
+        # Append the link to the source
+        result_text = truncated_text + "... \n" #+ f"\n\nSource: {url}"
+
+        return result_text if result_text else "No meaningful content found."
+    except Exception as e:
+        return f"Could not retrieve or parse the webpage content. \n {str(e)}"
+
+
+def test_person_search():
+
+    info_result = fetch_page_text(" https://ca.linkedin.com/in/olamide-owolabi")
+    Write.Print(info_result, Colors.white, interval=0)
+    restart()
 
 def person_search(first_name, last_name, city):
     query = f"{first_name} {last_name} {city}"
@@ -102,17 +150,18 @@ def person_search(first_name, last_name, city):
                 first_result_url = item.get('link', None)
                 if first_result_url:
                     page_text = fetch_page_text(first_result_url)
-                    results_data.append((idx, page_text))
+                    results_data.append((idx, page_text, first_result_url))
         else:
-            results_data.append((1, "No results found."))
+            results_data.append((1, "No results found.", None))
     except requests.exceptions.Timeout:
-        results_data.append((1, "Request timed out."))
+        results_data.append((1, "Request timed out.", None))
     except requests.exceptions.HTTPError as e:
-        results_data.append((1, f"HTTP error: {e.response.status_code}"))
+        results_data.append((1, f"HTTP error: {e.response.status_code}", None))
     except Exception as e:
-        results_data.append((1, f"Error: {str(e)}"))
+        results_data.append((1, f"Error: {str(e)}", None))
 
     clear()
+    # Prepare the header of the summary
     info_text = f"""
 ╭─{' '*78}─╮
 |{' '*29}Person Search Summary{' '*29}|
@@ -120,37 +169,26 @@ def person_search(first_name, last_name, city):
 | [+] > Name: {first_name} {last_name:<62}|
 | [+] > Location: {city:<62}|
 |{'-'*80}|
-"""
-    for idx, content in results_data:
+    """
+    for idx, content, source_url in results_data:
         info_text += f"| Result #{idx:<2}{' '*(73-len(str(idx)))}|\n"
         info_text += f"|{'-'*78}|\n"
         lines = [content[i:i+78] for i in range(0, len(content), 78)]
         for line in lines:
             info_text += f"| {line:<78}|\n"
+        if source_url:
+            info_text += f"| Source: {source_url:<71}|\n"
         if idx != results_data[-1][0]:
             info_text += f"|{'='*78}|\n"
     info_text += f"╰─{' '*78}─╯"
+
     Write.Print(info_text, Colors.white, interval=0)
+
+    save_choice = save_message()
+    if save_choice == 'y':
+            save_details(info_text, "Person_Search")
     restart()
 
-def fetch_page_text(url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36)"
-    }
-    try:
-        resp = requests.get(url, headers=headers, timeout=20)
-        resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, "lxml")
-
-        for tag_name in ["header", "footer", "nav", "aside", "script", "style", "noscript", "form"]:
-            for t in soup.find_all(tag_name):
-                t.decompose()
-
-        text = soup.get_text(separator=' ')
-        text = ' '.join(text.split())
-        return text if text else "No meaningful content found."
-    except Exception:
-        return "Could not retrieve or parse the webpage content."
 
 def ip_info(ip):
     url = f"https://ipinfo.io/{ip}/json"
@@ -161,6 +199,16 @@ def ip_info(ip):
 
         loc = data.get('loc', 'None')
         maps_link = f"https://www.google.com/maps?q={loc}" if loc != 'None' else 'None'
+        
+       
+       # Reverse DNS lookup
+        try:
+            rev_name = reversename.from_address(ip)
+            answers = dns.resolver.resolve(rev_name, "PTR")
+            ptr_record = str(answers[0]).strip('.')
+        except (dns.resolver.NoNameservers, dns.resolver.NXDOMAIN, dns.exception.DNSException) as e:
+            ptr_record = f"Reverse DNS lookup skipped due to error: {str(e)}"
+
 
         ip_detailo = f"""
 ╭─────────────────────────────────────────────────────────────────────────────╮
@@ -175,18 +223,19 @@ def ip_info(ip):
 │  Latitude, Longitude  : {loc:<51} │
 │  Timezone             : {data.get('timezone', 'None'):<51} │
 │  Google Maps Location : {maps_link:<51} │
+│  Reverse DNS          : {ptr_record:<51} │
 ╰─────────────────────────────────────────────────────────────────────────────╯
 """
         Write.Print(ip_detailo, Colors.white, interval=0)
 
         
-        save_choice = Write.Input("\n[?] > Do you want to save these details to a file? (y/n): ", default_color, interval=0).strip().lower()
+        save_choice = save_message()
         if save_choice == 'y':
             save_details(ip_detailo, "IP_address")
 
     except Exception as e:
         #clear()
-        Write.Print("\n[!] > Error retrieving IP address info.", default_color, interval=0)
+        Write.Print(f"\n \u2620 Error retrieving IP address info. {str(e)}", default_color, interval=0)
 
     restart()
 
@@ -238,7 +287,7 @@ def load_sites_from_file():
         print(f"Error: {file_path} not found.")
         return []
     
-def deep_account_search(nickname):
+def account_search(nickname):
     sites = load_sites_from_file()
 
     urls = []
@@ -249,9 +298,9 @@ def deep_account_search(nickname):
             url = site_format.rstrip('/') + '/' + nickname
         urls.append(url)
 
-    search_results = fetch_social_urls(urls, "Deep Account Search")
+    search_results = fetch_social_urls(urls, " \U0001F43C Account Search")
     Write.Print(search_results, Colors.white, interval=0)
-    save_choice = Write.Input("\n[?] > Do you want to save these details to a file? (y/n): ", default_color, interval=0).strip().lower()
+    save_choice = save_message()
     if save_choice == 'y':
         save_details(search_results, "Account_Search")
 
@@ -266,34 +315,38 @@ def phone_info(phone_number):
         valid = phonenumbers.is_valid_number(parsed_number)
         validity = "Valid" if valid else "Invalid"
         phonetext = f"""
-\n
-╭─{' '*50}─╮
-|{' '*17}Phone number info{' '*18}|
-|{'='*52}|
-| [+] > Number   || {phone_number:<33}|
-| [+] > Country  || {country:<33}|
-| [+] > Region   || {region:<33}|
-| [+] > Operator || {operator:<33}|
-| [+] > Validity || {validity:<33}|
-╰─{' '*15}─╯╰─{' '*31}─╯\n"""
+            \n
+            |{'='*52}|
+            |{' '*17}Phone number info{' '*18}|
+            |{'='*52}|
+            |  Number   || {phone_number:<38}|
+            |  Country  || {country:<38}|
+            |  Region   || {region:<38}|
+            |  Operator || {operator:<38}|
+            |  Validity || {validity:<38}|
+            ╰─{' '*9}─╯╰─{' '*37}─╯\n"""
 
         Write.Print(phonetext, Colors.white, interval=0)
 
+        save_choice = save_message()
+        if save_choice == 'y':
+            save_details(phonetext, "Phone_Number_Info")
+
     except phonenumbers.phonenumberutil.NumberParseException:
         clear()
-        Write.Print(f"\n[!] > Error: invalid phone number format (+10000000000)", default_color, interval=0)
+        Write.Print(f"\n Error: invalid phone number format (+10000000000)", Error_Color, interval=0)
 
     restart()
 
 def dns_lookup(domain):
     record_types = ['A', 'CNAME', 'MX', 'NS']
     result_output = f"""
-╭─{' '*78}─╮
-|{' '*33} DNS Lookup {' '*33}|
+
+|{' '*33} DNS Lookup {' '*35}|
 |{'='*80}|
 """
     for rtype in record_types:
-        result_output += f"| [+] > {rtype} Records: {' '*62}|\n"
+        result_output += f"| \u2611 {rtype} Records: {' '*62}|\n"
         try:
             answers = dns.resolver.resolve(domain, rtype)
             for ans in answers:
@@ -310,10 +363,27 @@ def dns_lookup(domain):
 
         result_output += f"|{'='*80}|\n"
 
-    result_output += f"╰─{' '*78}─╯"
+    
     Write.Print(result_output, Colors.white, interval=0)
+
+    save_choice = save_message()
+    if save_choice == 'y':
+        save_details(result_output, "DNS_Lookup")
     restart()
 
+def split_into_chunks(text, width):
+    """Splits the text into chunks of a specified width."""
+    return [text[i:i+width] for i in range(0, len(text), width)]
+
+def format_mx_records(mx_records, max_width):
+    if mx_records:
+        # Join MX records into a single string
+        mx_records_joined = ", ".join(mx_records)
+        # Split into manageable chunks if necessary
+        return split_into_chunks(mx_records_joined, max_width)
+    else:
+        return ["None"]
+    
 def email_lookup(email_address):
     try:
         v = validate_email(email_address)
@@ -333,37 +403,34 @@ def email_lookup(email_address):
 
     validity = "Likely Valid (MX found)" if mx_records else "No MX found (Might be invalid)"
 
+    max_mx_width = 52  # Max width for displayed MX record or line
+
+    mx_records_chunks = format_mx_records(mx_records, max_mx_width)
+    
+    mx_records_text = "\n".join(
+        f"│ {'':<32}││ {chunk:<57}│" if i > 0 else f"|  MX Records:   ││ {chunk:<55}│"
+        for i, chunk in enumerate(mx_records_chunks)
+    )
+
+
     email_text = f"""
-╭─{' '*78}─╮
-|{' '*34}Email Info{' '*34}|
-|{'='*80}|
-| [+] > Email:        || {email_address:<52}|
-| [+] > Domain:       || {email_domain:<52}|
-| [+] > MX Records:   || {", ".join(mx_records) if mx_records else "None":<52}|
-| [+] > Validity:     || {validity:<52}|
-╰─{' '*23}─╯╰─{' '*51}─╯
-"""
+            ╭─{'─'*78}─╮
+            │{'Email Info':^80}│
+            │{'='*80}│
+            │  Email:        ││ {'':<1} {email_address:<57}│
+            │  Domain:       ││ {'':<1} {email_domain:<57}│
+            {mx_records_text}
+            │  Validity:     ││ {'':<1} {validity:<57}│
+            ╰─{'─'*80}─╯
+            """
     Write.Print(email_text, Colors.white, interval=0)
+
+    save_choice = save_message()
+    if save_choice == 'y':
+        save_details(email_text, "Email_LookUp")
     restart()
 
-def reverse_dns(ip):
-    try:
-        rev_name = reversename.from_address(ip)
-        answers = dns.resolver.resolve(rev_name, "PTR")
-        ptr_record = str(answers[0]).strip('.')
-    except:
-        ptr_record = "No PTR record found"
 
-    rdns_text = f"""
-╭─{' '*78}─╮
-|{' '*33}Reverse DNS Lookup{' '*33}|
-|{'='*80}|
-| [+] > IP:     || {ip:<60}|
-| [+] > Host:   || {ptr_record:<60}|
-╰─{' '*23}─╯╰─{' '*51}─╯
-"""
-    Write.Print(rdns_text, Colors.white, interval=0)
-    restart()
 
 def analyze_email_header(raw_headers):
     parser = Parser()
@@ -1033,7 +1100,7 @@ def main():
 ║  №   │      Function          │ Description                                ║
 ╠══════╪════════════════════════╪════════════════════════════════════════════╣
 ║ [1]  │ IP Address Search      │ Retrieves IP address info                  ║
-║ [2]  │ Deep Account Search    │ Retrieves profiles from various websites   ║
+║ [2]  │ Account Search         │ Retrieves profiles from various websites   ║
 ║ [3]  │ Phone Search           │ Retrieves phone number info                ║
 ║ [4]  │ DNS Search             │ Retrieves DNS records (A, CNAME, MX, NS)   ║
 ║ [5]  │ Email Search           │ Retrieves MX info for an email             ║
@@ -1060,48 +1127,51 @@ def main():
 
             if choice == "1":
                 clear()
-                Write.Print("IP Address Search \n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                Write.Print("Press 0 and enter to cancel \n", Exit_Color, interval=0)
-                ip = Write.Input("Please enter IP-Address: " , default_color, interval=0)
+                Write.Print(" IP Address Search \n", Head_Color, interval=0)
+                press_zero()
+
+                ip = Write.Input(" \U0001F989 Please enter IP-Address: " , default_color, interval=0)
 
                 if ip == "0":
                     clear()
+                    zero_pressed()
                     continue
 
                 if not ip:
                     clear()
-                    Write.Print("[!] > Enter IP Address\n", Error_Color, interval=0)
+                    Write.Print(" \U0001F98B Enter IP Address\n", Error_Color, interval=0)
                     continue
                 ip_info(ip)
 
             elif choice == "2":
                 clear()
-                Write.Print("Username Account Search \n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                nickname = Write.Input("Enter a Username or Press 0 and enter to cancel: ", default_color, interval=0)
+                Write.Print(" Username Account Search \n", Head_Color, interval=0)
                 
-                Write.Print("[!] > Conducting deep account search...\n", default_color, interval=0)
+                press_zero()
+                nickname = Write.Input(" \U0001F989 Enter a Username: ", default_color, interval=0)
+                
+                Write.Print(" \U0001F422 Conducting deep account search...\n", default_color, interval=0)
 
                 if nickname == "0":
                     clear()
+                    zero_pressed()
                     continue
 
                 if not nickname:
                     clear()
-                    Write.Print("[!] > Enter username\n", Error_Color, interval=0)
+                    Write.Print(" \U0001F989 Enter username\n", Error_Color, interval=0)
                     continue
-                deep_account_search(nickname)
+                account_search(nickname)
 
             elif choice == "3":
                 clear()
-                Write.Print("Phone Number Search \n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                phone_number = Write.Input("Enter a valid Phone number Or Press \n"+
-                                            "'0' and enter to cancel: ", default_color, interval=0)
+                Write.Print(" Phone Number Search \n", Head_Color, interval=0)
+                press_zero()
+                phone_number = Write.Input(" \U0001F989 Enter a valid Phone number:", default_color, interval=0)
                 
                 if phone_number == "0":
                    clear()
+                   zero_pressed()
                    continue
 
                 if not phone_number:
@@ -1112,32 +1182,32 @@ def main():
 
             elif choice == "4":
                 clear()
-                Write.Print("Domain Search \n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                domain = Write.Input("Enter Domain \n "
-                                     + " Or Press 0 and enter to cancel ", default_color, interval=0)
+                Write.Print(" Domain Search \n", Head_Color, interval=0)
+                press_zero()
+                domain = Write.Input(" \U0001F989 Enter Domain: \n  ", default_color, interval=0)
                 
                 if domain == "0":
                    clear()
+                   zero_pressed()
                    continue
 
                 if not domain:
                     clear()
                     Write.Print("[!] > Enter domain\n", default_color, interval=0)
                     continue
-                Write.Print("[!] > Retrieving DNS records...\n", default_color, interval=0)
+                Write.Print(" \U0001F422 Retrieving DNS records...\n", default_color, interval=0)
                 dns_lookup(domain)
 
             elif choice == "5":
                 clear()
-                Write.Print("Email Search \n", Head_Color, interval=0)
+                Write.Print(" Email Search \n", Head_Color, interval=0)
 
-                Write.Print("\n", Head_Color, interval=0) 
-                email = Write.Input("Enter a valid Email or Press '0' and enter to cancel ", default_color, interval=0)
+                press_zero()
+                email = Write.Input(" \U0001F989 Enter a valid Email: ", default_color, interval=0)
 
                 if email == "0":
                    clear()
-                   Write.Print("[!] > Operation cancelled.\n", Error_Color, interval=0)
+                   zero_pressed()
                    continue
 
                 if not email:
@@ -1148,16 +1218,15 @@ def main():
 
             elif choice == "6":
                 clear()
-                Write.Print("Person Search with location \n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0)
-                Write.Print("Press 'O' and enter to cancel", default_color, interval=0)
+                Write.Print(" Person Search with location \n", Head_Color, interval=0)
+                press_zero()
 
                 Write.Print("\n", Head_Color, interval=0)
 
                
-                first_name = Write.Input("[?] > First Name: ", default_color, interval=0)
-                last_name = Write.Input("[?] > Last Name: ", default_color, interval=0)
-                city = Write.Input("[?] > City/Location: ", default_color, interval=0)
+                first_name = Write.Input(" \U0001F989 First Name: ", default_color, interval=0)
+                last_name = Write.Input(" \U0001F989 Last Name: ", default_color, interval=0)
+                city = Write.Input(" \U0001F989 City/Location: ", default_color, interval=0)
 
                 if "0" in [first_name, last_name, city]:
                     clear()
@@ -1169,40 +1238,23 @@ def main():
                     Write.Print("[!] > Enter first and last name\n", default_color, interval=0)
                     continue
                 Write.Print("[!] > Searching the given name and location...\n", default_color, interval=0)
+                #test_person_search()
                 person_search(first_name, last_name, city)
 
-            elif choice == "7":
-                clear()
-                Write.Print("Reverse DNS Search \n", Head_Color, interval=0)
-
-                Write.Print("\n", Head_Color, interval=0) 
-
-                ip = Write.Input("Enter IP Address for Reverse DNS or \n"
-                                  + "Press 0 and enter to cancel", default_color, interval=0)
-                
-                if ip == "0":
-                   clear()
-                   continue
-
-                if not ip:
-                    clear()
-                    Write.Print("[!] > Enter IP address\n", default_color, interval=0)
-                    continue
-                reverse_dns(ip)
 
             elif choice == "8":
                 clear()
-                Write.Print("Email Header Search \n", Head_Color, interval=0)
+                Write.Print(" Email Header Search \n", Head_Color, interval=0)
 
-                Write.Print("\n", Head_Color, interval=0) 
-                Write.Print(" Paste the raw email headers below (end with an empty line):\n", default_color, interval=0)
-                Write.Print("Or Press 0 and enter to cancel:\n", default_color, interval=0)
+                press_zero()
+                Write.Print(" \U0001F989 Paste the raw email headers below (end with an empty line):\n", default_color, interval=0)
+               
                 lines = []
                 while True:
                     line = input()
                     if line.strip() == "0":
                         clear()
-                        Write.Print("[!] > Operation cancelled.\n", Error_Color, interval=0)
+                        zero_pressed()
                         break
                     if not line.strip():
                         break
@@ -1216,14 +1268,14 @@ def main():
 
             elif choice == "9":
                 clear()
-                Write.Print("Email Breach Check\n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                email = Write.Input("Enter an Email to check if breached \n"
-                                    +"Or Press 0 and enter to cancel", default_color, interval=0)
+                Write.Print(" Email Breach Check\n", Head_Color, interval=0)
+                press_zero()
+
+                email = Write.Input(" \U0001F989 Enter an Email to check if breached ", default_color, interval=0)
 
                 if email == "0":
                      clear()
-                     Write.Print("[!] > Operation cancelled.\n", Error_Color, interval=0)
+                     zero_pressed()
                      continue
                 if not email:
                     clear()
@@ -1233,12 +1285,13 @@ def main():
 
             elif choice == "10":
                 clear()
-                Write.Print("Domain for WHOIS lookup\n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                domain = Write.Input("Enter a Domain pr Press 0 to Cancel ", default_color, interval=0)
+                Write.Print(" Domain for WHOIS lookup\n", Head_Color, interval=0)
+                press_zero()
+                domain = Write.Input("\U0001F989 Enter a Domain: ", default_color, interval=0)
 
                 if domain == "0":
                     clear()
+                    zero_pressed()
                     continue
 
                 if not domain:
@@ -1248,23 +1301,24 @@ def main():
                 whois_lookup(domain)
 
             elif choice == "11":
-                password = Write.Input("[!] > Enter password to evaluate strength or press 0 to cancel:\n", default_color, interval=0)
+                Write.Print(" Password Strength Checker\n", Head_Color, interval=0)
+                press_zero()
+                password = Write.Input(" \U0001F989 Enter password to evaluate strength:\n", default_color, interval=0)
                 if password == "0":
                     clear()
-                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    zero_pressed()
                 else:
                  password_strength_tool(password)
 
             elif choice == "12":
                 clear()
-                Write.Print("Username Check\n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                usernam =  Write.Print("Enter Username to search \n"
-                                      +"Or Press 0 and enter to cancel ", default_color, interval=0)
+                Write.Print(" Username Check\n", Head_Color, interval=0)
+                press_zero()
+                usernam =  Write.Print(" \U0001F989 Enter Username to search: ", default_color, interval=0)
                 
                 if usernam == "0":
                     clear()
-                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    zero_pressed()
                     continue
 
                 username_check(usernam.strip())
@@ -1272,13 +1326,13 @@ def main():
             elif choice == "13":
                 clear()
                 Write.Print("Phone Number reverse Lookup\n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
+                press_zero()
 
-                phone_number = Write.Input("Enter Phone number or Press 0 and enter to cancel ", default_color, interval=0)
+                phone_number = Write.Input("Enter Phone number: ", default_color, interval=0)
                 
                 if phone_number == "0":
                     clear()
-                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    zero_pressed()
                     continue
                 
                 if not phone_number:
@@ -1291,15 +1345,15 @@ def main():
             elif choice == "14":
                 clear()
                 Write.Print("SSL Certificate Search\n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                Write.Print("Press '0' and enter to cancel\n", default_color, interval=0)
+                press_zero() 
+                
 
 
                 domain = Write.Input("Enter Domain for SSL check: ", default_color, interval=0)
 
                 if domain == "0":
                     clear()
-                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    zero_pressed()
                     continue
 
                 if not domain:
@@ -1310,16 +1364,14 @@ def main():
 
             elif choice == "15":
                 clear()
-                Write.Print("Robot text lookup and Sitemap \n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                Write.Print("Press '0' and enter to cancel\n", default_color, interval=0)
+                Write.Print(" Robot text lookup and Sitemap \n", Head_Color, interval=0)
+                press_zero()
 
-                domain = Write.Input("Enter Domain to check for robots.txt & sitemap: ", default_color, interval=0)
+                domain = Write.Input(" \U0001F989 Enter Domain to check for robots.txt & sitemap: ", default_color, interval=0)
                 
                 if domain == "0":
                     clear()
-                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
-                    continue
+                    zero_pressed()
                 
                 if not domain:
                     clear()
@@ -1329,14 +1381,13 @@ def main():
 
             elif choice == "16":
                 clear()
-                Write.Print("DNSBL Check \n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                Write.Print("Press '0' and enter to cancel\n", default_color, interval=0)
-                ip_address = Write.Input("Enter IP address to check DNSBL: ", default_color, interval=0)
+                Write.Print(" DNSBL Check \n", Head_Color, interval=0)
+                press_zero()
+                ip_address = Write.Input(" \U0001F989 Enter IP address to check DNSBL: ", default_color, interval=0)
 
                 if ip_address == "0":
                     clear()
-                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    zero_pressed()
                     continue
 
                 if not ip_address:
@@ -1347,14 +1398,13 @@ def main():
 
             elif choice == "17":
                 clear()
-                Write.Print("Web Metadata Info \n", Head_Color, interval=0)
-                Write.Print("\n", Head_Color, interval=0) 
-                Write.Print("Press '0' and enter to cancel\n", default_color, interval=0)
+                Write.Print(" Web Metadata Info \n", Head_Color, interval=0)
+                press_zero()
 
-                url = Write.Input("[?] > URL for metadata extraction: ", default_color, interval=0)
+                url = Write.Input(" \U0001F989 URL for metadata extraction: ", default_color, interval=0)
                 if url == "0":
                     clear()
-                    Write.Print("[!] > Operation cancelled.\n", default_color, interval=0)
+                    zero_pressed()
                     continue
 
                 if not url:
@@ -1365,7 +1415,7 @@ def main():
 
             elif choice == "0":
                 clear()
-                Write.Print("\n[!] > Exiting...", Error_Color, interval=0)
+                Write.Print("\n  Exiting...", Error_Color, interval=0)
                 exit()
 
             elif choice == "99":
@@ -1373,11 +1423,11 @@ def main():
 
             else:
                 clear()
-                Write.Print("[!] > Invalid input.\n", Error_Color, interval=0)
+                Write.Print(" \u2620 Invalid input.\n", Error_Color, interval=0)
 
         except KeyboardInterrupt:
             clear()
-            Write.Print("[!] > Exiting on user request...\n", Error_Color, interval=0)
+            Write.Print(" \u26A0 Exiting on user request...\n", Error_Color, interval=0)
             exit()
 
 def settings():
