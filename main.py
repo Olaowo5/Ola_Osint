@@ -49,12 +49,14 @@ def save_details(data,NameData):
         cwd = os.getcwd()
         print(f"Current working directory is: {cwd}")
 
-        current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
-        print(current_time)
+        #current_time = datetime.now().strftime("%Y%m%d_%H%M%S")
+        #current_time = datetime.now().strftime("%A%B%d%Y%I:%M:%S %p")
+        current_time = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+        #print(current_time)
     
         filename = f"Saves/{NameData}_{current_time}.txt"
-        print(f"the filename {filename}")
-        print(data)
+        #print(f"the filename {filename}")
+        #print(data)
 
         # Define the file path
         #file_path = Path(filename)
@@ -173,14 +175,14 @@ def ip_info(ip):
 │  Latitude, Longitude  : {loc:<51} │
 │  Timezone             : {data.get('timezone', 'None'):<51} │
 │  Google Maps Location : {maps_link:<51} │
-╰────────────────────────────────────────────────────────────────────────────╯
+╰─────────────────────────────────────────────────────────────────────────────╯
 """
         Write.Print(ip_detailo, Colors.white, interval=0)
 
         # Ask the user if they want to save the details to a file
-        #save_choice = Write.Input("\n[?] > Do you want to save these details to a file? (y/n): ", default_color, interval=0).strip().lower()
-        #if save_choice == 'y':
-        save_details(ip_detailo, "IP_address")
+        save_choice = Write.Input("\n[?] > Do you want to save these details to a file? (y/n): ", default_color, interval=0).strip().lower()
+        if save_choice == 'y':
+            save_details(ip_detailo, "IP_address")
 
     except Exception as e:
         #clear()
@@ -194,19 +196,19 @@ def fetch_social_urls(urls, title):
             response = requests.get(url, timeout=10)
             status_code = response.status_code
             if status_code == 200:
-                return f"[+] > {url:<50}|| Found"
+                return f"\u2714 > {url:<50}|| Found"
             elif status_code == 404:
-                return f"[-] > {url:<50}|| Not found"
+                return f"\u2718 > {url:<50}|| Not found"
             else:
-                return f"[-] > {url:<50}|| Error: {status_code}"
+                return f"\u2718 > {url:<50}|| Error: {status_code}"
         except requests.exceptions.Timeout:
-            return f"[-] > {url:<50}|| Timeout"
+            return f"\u2718 > {url:<50}|| Timeout"
         except requests.exceptions.ConnectionError:
-            return f"[-] > {url:<50}|| Connection error"
+            return f"\u2718 > {url:<50}|| Connection error"
         except requests.exceptions.RequestException:
-            return f"[-] > {url:<50}|| Request error"
+            return f"\u2718 > {url:<50}|| Request error"
         except Exception:
-            return f"[-] > {url:<50}|| Unexpected error"
+            return f"\u2718 > {url:<50}|| Unexpected error"
 
     result_str = f"""
 ╭─{' '*78}─╮
