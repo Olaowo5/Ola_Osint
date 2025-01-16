@@ -21,6 +21,12 @@ from termcolor import colored
 from tqdm import tqdm
 from datetime import datetime
 from pathlib import Path
+import traceback
+from email import message_from_string
+from email.policy import default
+import re
+import hashlib
+
 
 
 default_color = Colors.cyan
@@ -31,7 +37,7 @@ Error_Color = Colors.red
 API_KEY = "AIzaSyAondv81wJMIhlMnUzmhsPJcw70CYsHAPM" #"ENTER GOOGLE CUSTOM SEARCH API KEY HERE"
 CX = "509f2c6d7178d43ea"  #"ENTER GOOGLE CUSTOM SEARCH CX HERE"
 
-HIBP_API_KEY = "ENTER HAVE I BEEN PWNED API KEY HERE"
+HIBP_API_KEY =  "b6e4b60bbcfa4bc9b8fb8a714966c372" #"ENTER HAVE I BEEN PWNED API KEY HERE"
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -43,8 +49,20 @@ def press_zero():
 def zero_pressed():
      Write.Print(" \U0001F438 Operation cancelled.\n", Error_Color, interval=0)
 
-
-
+def wrap_text(text, width):
+    # Manually wrap text to fit the specified width
+    wrapped_lines = []
+    while text:
+        if len(text) <= width:
+            wrapped_lines.append(text)
+            break
+        else:
+            space_index = text.rfind(' ', 0, width)
+            if space_index == -1:  # no space found, just split the text
+                space_index = width
+            wrapped_lines.append(text[:space_index])
+            text = text[space_index:].lstrip()
+    return wrapped_lines
 
 def restart():
     Write.Input("\n 🐘 Press Enter to return to the main menu...", default_color, interval=0)
@@ -129,6 +147,19 @@ def test_person_search():
     restart()
 
 def person_search(first_name, last_name, city):
+
+    if not API_KEY or not CX:
+        ErrorString = ""
+        if not API_KEY and not CX:       
+            ErrorString = "Please enter a valid Google API Key and Custom Search Engine ID."
+        elif not API_KEY:
+            ErrorString = "Please enter a valid Google Search API Key."
+        else:
+            ErrorString = "Please enter a valid Custom Search Engine ID."
+
+        Write.Print(ErrorString, Error_Color, interval=0)    
+        return
+
     query = f"{first_name} {last_name} {city}"
     url = "https://www.googleapis.com/customsearch/v1"
     params = {
@@ -345,6 +376,7 @@ def dns_lookup(domain):
 |{' '*33} DNS Lookup {' '*35}|
 |{'='*80}|
 """
+    result_output += f"| Domain: {domain:<67}|\n"
     for rtype in record_types:
         result_output += f"| \u2611 {rtype} Records: {' '*62}|\n"
         try:
@@ -363,7 +395,7 @@ def dns_lookup(domain):
 
         result_output += f"|{'='*80}|\n"
 
-    
+    clear()
     Write.Print(result_output, Colors.white, interval=0)
 
     save_choice = save_message()
@@ -430,112 +462,138 @@ def email_lookup(email_address):
         save_details(email_text, "Email_LookUp")
     restart()
 
+def capture_email_input():
+    
+    Write.Print(" \U0001F989 Enter the raw email data. Then type 'END' on a new line and press Enter when finished:", default_color, interval=0)
+    lines = []
+    while True:
+        line = input()
+        if line.strip() == "0":
+           
+            return None  
+        elif line.strip().upper() == "END":
+            break
+        lines.append(line)
+
+    raw_data = "\n".join(lines)
+    return raw_data
 
 
-def analyze_email_header(raw_headers):
-    parser = Parser()
-    msg = parser.parsestr(raw_headers)
-    from_ = msg.get("From", "")
-    to_ = msg.get("To", "")
-    subject_ = msg.get("Subject", "")
-    date_ = msg.get("Date", "")
-    received_lines = msg.get_all("Received", [])
 
-    found_ips = []
-    if received_lines:
-        for line in received_lines:
-            potential_ips = re.findall(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', line)
-            for ip in potential_ips:
-                if ip not in found_ips:
-                    found_ips.append(ip)
+def analyze_email_raw_data(raw_data):
+ try:
+        # Parse the raw email data using a robust email parser
+        msg = message_from_string(raw_data, policy=default)
 
-    header_text = f"""
-╭─{' '*78}─╮
-|{' '*31}Email Header Analysis{' '*31}|
-|{'='*80}|
-| [+] > From:      || {from_:<55}|
-| [+] > To:        || {to_:<55}|
-| [+] > Subject:   || {subject_:<55}|
-| [+] > Date:      || {date_:<55}|
-|{'-'*80}|
+        # Extract basic header information
+        from_ = msg.get("From", "")
+        to_ = msg.get("To", "")
+        subject_ = msg.get("Subject", "")
+        date_ = msg.get("Date", "")
+
+        print("Debug:", f"From: {from_}, To: {to_}, Subject: {subject_}, Date: {date_}")
+
+        received_lines = msg.get_all("Received", [])
+        found_ips = []
+
+        if received_lines:
+            for line in received_lines:
+                potential_ips = re.findall(r'\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b', line)
+                for ip in potential_ips:
+                    if ip not in found_ips:
+                        found_ips.append(ip)
+
+        # Prepare and print the header summary
+        header_text = f"""
+|{' '*31}Email Analysis{' '*31}|
+|{'='*75}|
+|  From:      || {from_:<55}|
+|  To:        || {to_:<55}|
+|  Subject:   || {subject_:<55}|
+|  Date:      || {date_:<55}|
+|{'-'*75}|
 """
-    if found_ips:
-        header_text += "| [+] > Received Path (IPs found):\n"
-        for ip in found_ips:
-            header_text += f"|    {ip:<76}|\n"
-    else:
-        header_text += "| [+] > No IPs found in Received headers.\n"
+        if found_ips:
+            header_text += "| Received Path (IPs found):\n"
+            for ip in found_ips:
+                header_text += f"|    {ip:<76}|\n"
+        else:
+            header_text += "| No IPs found in Received headers.\n"
 
-    header_text += f"╰─{' '*78}─╯"
-    Write.Print(header_text, Colors.white, interval=0)
+        header_text += f"╰─{' '*78}─╯"
+        Write.Print(header_text, Colors.white, interval=0)
 
-    if found_ips:
-        ip_details_header = f"""
-╭─{' '*78}─╮
+        if found_ips:
+            ip_details_header = f"""
 |{' '*30}IP Geolocation Details{' '*30}|
-|{'='*80}|
+|{'='*75}|
 """
-        ip_details_summary = ""
-        for ip in found_ips:
-            data = get_ip_details(ip)
-            if data is not None:
-                loc = data.get('loc', 'None')
-                ip_details_summary += f"| IP: {ip:<14}|| City: {data.get('city','N/A'):<15} Region: {data.get('region','N/A'):<15} Country: {data.get('country','N/A'):<4}|\n"
-                ip_details_summary += f"|    Org: {data.get('org','N/A'):<63}|\n"
-                ip_details_summary += f"|    Loc: {loc:<63}|\n"
-                ip_details_summary += "|"+ "-"*78 + "|\n"
-            else:
-                ip_details_summary += f"| IP: {ip:<14}|| [!] Could not retrieve details.\n"
-                ip_details_summary += "|"+ "-"*78 + "|\n"
-        ip_details_footer = f"╰─{' '*78}─╯"
+            ip_details_summary = ""
+            for ip in found_ips:
+                data = get_ip_details(ip)
+                if data is not None:
+                    loc = data.get('loc', 'None')
+                    ip_details_summary += f"| IP: {ip:<14}|| City: {data.get('city','N/A'):<15} Region: {data.get('region','N/A'):<15} Country: {data.get('country','N/A'):<4}|\n"
+                    ip_details_summary += f"|    Org: {data.get('org','N/A'):<63}|\n"
+                    ip_details_summary += f"|    Loc: {loc:<63}|\n"
+                    ip_details_summary += "|"+ "-"*78 + "|\n"
+                else:
+                    ip_details_summary += f"| IP: {ip:<14}|| \u2620 Could not retrieve details.\n"
+                    ip_details_summary += "|"+ "-"*78 + "|\n"
+            ip_details_footer = f"| {' '*78} |"
 
-        Write.Print(ip_details_header + ip_details_summary + ip_details_footer, Colors.white, interval=0)
+            Write.Print(ip_details_header + ip_details_summary + ip_details_footer, Colors.white, interval=0)
 
-    spf_result, dkim_result, dmarc_result = None, None, None
-    spf_domain, dkim_domain = None, None
-    auth_results = msg.get_all("Authentication-Results", [])
-    from_domain = ""
-    if "@" in from_:
-        from_domain = from_.split("@")[-1].strip(">").strip()
+        # SPF, DKIM, DMARC checks
+        spf_result, dkim_result, dmarc_result = None, None, None
+        spf_domain, dkim_domain = None, None
+        auth_results = msg.get_all("Authentication-Results", [])
+        from_domain = from_.split('@')[-1].strip() if '@' in from_ else ""
 
-    if auth_results:
-        for entry in auth_results:
-            spf_match = re.search(r'spf=(pass|fail|softfail|neutral)', entry, re.IGNORECASE)
-            if spf_match:
-                spf_result = spf_match.group(1)
-            spf_domain_match = re.search(r'envelope-from=([^;\s]+)', entry, re.IGNORECASE)
-            if spf_domain_match:
-                spf_domain = spf_domain_match.group(1)
+        if auth_results:
+            for entry in auth_results:
+                spf_match = re.search(r'spf=(pass|fail|softfail|neutral)', entry, re.IGNORECASE)
+                if spf_match:
+                    spf_result = spf_match.group(1)
+                spf_domain_match = re.search(r'envelope-from=([^;\s]+)', entry, re.IGNORECASE)
+                if spf_domain_match:
+                    spf_domain = spf_domain_match.group(1)
 
-            dkim_match = re.search(r'dkim=(pass|fail|none|neutral)', entry, re.IGNORECASE)
-            if dkim_match:
-                dkim_result = dkim_match.group(1)
-            dkim_domain_match = re.search(r'd=([^;\s]+)', entry, re.IGNORECASE)
-            if dkim_domain_match:
-                dkim_domain = dkim_domain_match.group(1)
+                dkim_match = re.search(r'dkim=(pass|fail|none|neutral)', entry, re.IGNORECASE)
+                if dkim_match:
+                    dkim_result = dkim_match.group(1)
+                dkim_domain_match = re.search(r'd=([^;\s]+)', entry, re.IGNORECASE)
+                if dkim_domain_match:
+                    dkim_domain = dkim_domain_match.group(1)
 
-            dmarc_match = re.search(r'dmarc=(pass|fail|none)', entry, re.IGNORECASE)
-            if dmarc_match:
-                dmarc_result = dmarc_match.group(1)
+                dmarc_match = re.search(r'dmarc=(pass|fail|none)', entry, re.IGNORECASE)
+                if dmarc_match:
+                    dmarc_result = dmarc_match.group(1)
 
-    spf_align = False
-    dkim_align = False
-    if from_domain and spf_domain:
-        spf_align = from_domain.lower() == spf_domain.lower()
-    if from_domain and dkim_domain:
-        dkim_align = from_domain.lower() == dkim_domain.lower()
+        spf_align = (from_domain.lower() == spf_domain.lower()) if from_domain and spf_domain else False
+        dkim_align = (from_domain.lower() == dkim_domain.lower()) if from_domain and dkim_domain else False
 
-    alignment_text = f"""
-╭─{' '*78}─╮
+        alignment_text = f"""
 |{' '*30}SPF / DKIM / DMARC Checks{' '*29}|
-|{'='*80}|
-| [+] > SPF  Result:   {spf_result if spf_result else 'Not found':<20}   Domain: {spf_domain if spf_domain else 'N/A':<20} Aligned: {spf_align}|
-| [+] > DKIM Result:   {dkim_result if dkim_result else 'Not found':<20} Domain: {dkim_domain if dkim_domain else 'N/A':<20} Aligned: {dkim_align}|
-| [+] > DMARC Result:  {dmarc_result if dmarc_result else 'Not found':<20}|
-╰─{' '*78}─╯
+|{'='*75}|
+|  SPF  Result:   {spf_result if spf_result else 'Not found':<20}   Domain: {spf_domain if spf_domain else 'N/A':<20} Aligned: {spf_align}|
+|  DKIM Result:   {dkim_result if dkim_result else 'Not found':<20} Domain: {dkim_domain if dkim_domain else 'N/A':<20} Aligned: {dkim_align}|
+|  DMARC Result:  {dmarc_result if dmarc_result else 'Not found':<20}|
+
 """
-    Write.Print(alignment_text, Colors.white, interval=0)
-    restart()
+        Write.Print(alignment_text, Colors.white, interval=0)
+        save_choice = save_message()
+        Total_String = header_text + "\n"+ ip_details_header + "\n" +  ip_details_summary + "\n"+ ip_details_footer  + "\n" + alignment_text
+        if save_choice == 'y':
+            save_details(Total_String, "Email_Raw_Info")
+
+ except Exception as e: 
+        Write.Print(f"An error occurred while analyzing the email raw data: {str(e)}", Error_Color, interval=0)
+        traceback.print_exc()
+
+ 
+
+ restart()
 
 def haveibeenpwned_check(email):
     headers = {
@@ -557,6 +615,10 @@ def haveibeenpwned_check(email):
 | [!] > Bad news! Your email was found in {len(breaches)} breach(es)                          |
 |{'-'*80}|
 """
+            max_width = 70  # Define a constant width for the content
+            separator = f"|{'=' * (max_width + 12)}|\n"
+            results_text = separator
+
             for index, breach in enumerate(breaches, start=1):
                 breach_name = breach.get('Name', 'Unknown')
                 domain = breach.get('Domain', 'Unknown')
@@ -565,42 +627,62 @@ def haveibeenpwned_check(email):
                 pwn_count = breach.get('PwnCount', 'Unknown')
                 data_classes = ", ".join(breach.get('DataClasses', []))
 
-                results_text += f"| Breach #{index}: {breach_name:<66}|\n"
-                results_text += f"|    Domain: {domain:<71}|\n"
-                results_text += f"|    Breach Date: {breach_date:<65}|\n"
-                results_text += f"|    Added Date:  {added_date:<65}|\n"
-                results_text += f"|    PwnCount:    {pwn_count:<65}|\n"
-                results_text += f"|    Data Types:  {data_classes:<65}|\n"
-                results_text += f"|{'='*80}|\n"
-            results_text += f"╰─{' '*78}─╯"
+               
+
+                results_text += f"| Breach #{index}: {breach_name:<{max_width}}|\n"
+                results_text += f"|    Domain: {domain:<{max_width}}|\n"
+                results_text += f"|    Breach Date: {breach_date:<{max_width-5}}|\n"
+                results_text += f"|    Added Date:  {added_date:<{max_width-5}}|\n"
+                results_text += f"|    PwnCount:    {pwn_count:<{max_width-5}}|\n"
+                #results_text += f"|    Data Types:  {data_classes:<{max_width}}|\n"
+                #results_text += f"|{'='*80}|\n"
+                wrappeed = wrap_text(data_classes, max_width)
+                for i, line in enumerate(wrappeed):
+                    prefix = "Data Types: " if i == 0 else " " * 13
+                    results_text += f"|    {prefix}{line:<{max_width-3}}|\n"
+
+                results_text += separator
+
+            results_text += f"\n END OF BREACHES\n"
             Write.Print(results_text, Colors.white, interval=0)
+
+            
+            save_choice = save_message()
+            if save_choice == 'y':
+                save_details(results_text, "Hv_Bn_Pwned")
 
         elif resp.status_code == 404:
             clear()
             msg = f"""
-╭─{' '*78}─╮
+
 |{' '*30}Have I Been Pwned?{' '*30}|
 |{'='*80}|
-| [!] > Good news! No breaches found for: {email:<48}|
-╰─{' '*78}─╯
+|  \U0001F43C Good news! No breaches found for: {email:<48}|
+
 """
             Write.Print(msg, Colors.white, interval=0)
+
+            save_choice = save_message()
+            if save_choice == 'y':
+                save_details(msg, "Hv_Bn_Pwned")
         else:
             clear()
             error_msg = f"""
-[!] > An error occurred: HTTP {resp.status_code}
+\u2620 An error occurred: HTTP {resp.status_code}
 Response: {resp.text}
 """
             Write.Print(error_msg, Colors.red, interval=0)
+            
 
     except requests.exceptions.Timeout:
         clear()
-        Write.Print("[!] > Request timed out when contacting Have I Been Pwned.", default_color, interval=0)
+        Write.Print("\u2620 Request timed out when contacting Have I Been Pwned.", default_color, interval=0)
     except Exception as e:
         clear()
-        Write.Print(f"[!] > An error occurred: {str(e)}", default_color, interval=0)
+        Write.Print(f"\u2620 An error occurred: {str(e)}", default_color, interval=0)
 
     restart()
+
 
 def change_color():
     global default_color
@@ -645,7 +727,7 @@ def change_color():
 
 def whois_lookup(domain):
     try:
-        w = whois.whois(domain)
+        w = whois.whois(domain)  # Assuming 'whois' is correctly initialized
         clear()
 
         domain_name = w.domain_name if w.domain_name else "N/A"
@@ -656,80 +738,137 @@ def whois_lookup(domain):
         name_servers = ", ".join(w.name_servers) if w.name_servers else "N/A"
         status = ", ".join(w.status) if w.status else "N/A"
 
+        # Wrap name servers and statuses
+        wrapped_Create_Date = wrap_text(str(creation_date), 52)
+        wrapped_Exp_Date = wrap_text(str(expiration_date), 52)
+        wrapped_Updat_Date = wrap_text(str(updated_date), 52)
+        wrapped_name_servers = wrap_text(name_servers, 52)
+        wrapped_status = wrap_text(status, 52)
+
+        def format_wrapped_lines(lines, label):
+            label_with_colon = label + ":"
+            prefix_length = len(label_with_colon) + 8  # Includes "|| " and initial padding
+            formatted_text = ""
+            for i, line in enumerate(lines):
+                if i == 0:
+                    prefix = f"{label_with_colon:<20}|| "
+                else:
+                    # Leaves room for the prefix space alignment
+                    prefix = ' ' * (prefix_length)
+                
+                formatted_text += f"|  {prefix}{line:<56}|\n"
+            return formatted_text
+
         whois_text = f"""
-╭─{' '*78}─╮
-|{' '*34}WHOIS Lookup{' '*34}|
-|{'='*80}|
-| [+] > Domain Name:       || {str(domain_name):<52}|
-| [+] > Registrar:         || {str(registrar):<52}|
-| [+] > Creation Date:     || {str(creation_date):<52}|
-| [+] > Expiration Date:   || {str(expiration_date):<52}|
-| [+] > Updated Date:      || {str(updated_date):<52}|
-| [+] > Name Servers:      || {name_servers:<52}|
-| [+] > Status:            || {status:<52}|
-╰─{' '*23}─╯╰─{' '*51}─╯
+
+|{' '*34}WHOIS Lookup{' '*31}|
+|{'='*77}|
+|    Domain Name:       || {str(domain_name):<51}|
+|    Registrar:         || {str(registrar):<51}|
+|{'-'*77}|
+{format_wrapped_lines(wrapped_Create_Date, "Creation Date")}
+{format_wrapped_lines(wrapped_Exp_Date, "Expiration Date")}
+{format_wrapped_lines(wrapped_Updat_Date, "Updated Date")}
+{format_wrapped_lines(wrapped_name_servers, "Name Servers")}
+{format_wrapped_lines(wrapped_status, "Status")}
+
 """
         Write.Print(whois_text, Colors.white, interval=0)
 
+        save_choice = save_message()
+        if save_choice == 'y':
+            save_details(whois_text, "Domain_LookUp")
+
     except Exception as e:
         clear()
-        Write.Print(f"[!] > WHOIS lookup error: {str(e)}", default_color, interval=0)
+        Write.Print(f" \u2620  WHOIS lookup error: {str(e)}", default_color, interval=0)
 
     restart()
 
-def check_password_strength(password):
-    txt_file_path = os.path.join(os.path.dirname(__file__), "passwords.txt")
-    if os.path.isfile(txt_file_path):
-        try:
-            with open(txt_file_path, "r", encoding="utf-8") as f:
-                common_words = f.read().splitlines()
-            for word in common_words:
-                if word and word in password:
-                    return "Weak password (may contain common phrase, term, word, sequence, etc)"
-        except Exception:
-            pass
+def pass_strength(password):
+    
 
     score = 0
-    if len(password) >= 8:
+    if len(password) > 11:  #At Least 10 characters
+        score += 1   
+    if re.search(r'[A-Z]', password): #At Least 1 uppercase letter
         score += 1
-    if len(password) >= 12:
+    if re.search(r'[a-z]', password): #At Least 1 lowercase letter
         score += 1
-    if re.search(r'[A-Z]', password):
+    if re.search(r'\d', password): #At Least 1 digit
         score += 1
-    if re.search(r'[a-z]', password):
+    if re.search(r'[^a-zA-Z0-9]', password): #At Least 1 special character
         score += 1
-    if re.search(r'\d', password):
-        score += 1
-    if re.search(r'[^a-zA-Z0-9]', password):
-        score += 1
+
+    scoreboard = f"Password entered: {password}\n"    
 
     if score <= 2:
-        return "Weak password (may contain common phrase, term, word, sequence, etc)"
-    elif 3 <= score <= 4:
-        return "Moderate password (room for improvement)"
+        scoreboard += "Too weak, add more characters and complexity."
+    elif score < 5:
+        scoreboard += "Needs work. "
     else:
-        return "Strong password"
+        scoreboard += "Meets the standard, it will suffice  \U0001F427"
 
-def password_strength_tool(password=None):
+    def HIBP_Password(passp):
+        # Hash the password using SHA-1
+        sha1_password = hashlib.sha1(passp.encode('utf-8')).hexdigest().upper()
+        prefix = sha1_password[:5]
+        suffix = sha1_password[5:]
+
+        # Make a request to the PwnedPasswords API
+        url = f"https://api.pwnedpasswords.com/range/{prefix}"
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            hashes = (line.split(':') for line in response.text.splitlines())
+            for h, count in hashes:
+                if h == suffix:
+                    return int(count)
+        return 0
+    
+    count = HIBP_Password(password)
+
+
+
+    if count:
+        scoreboard += "\n" + (f"This password has been seen {count} times in data breaches.")
+        scoreboard += "\n" + ("Change It .")
+    else:
+        if score >= 4:
+            scoreboard += "\n" + ("This password hasn't been found in known data breaches. \n and seems good.")
+        else:    
+            scoreboard += "\n" +("This password hasn't been found in known data breaches. \n but needs work")
+
+
+    return scoreboard    
+
+
+
+def check_password(password=None):
     clear() 
     if not password:
         clear()
-        Write.Print("[!] > Password cannot be empty Please enter the password.\n", default_color, interval=0)
+        Write.Print(" Password cannot be empty Please enter the password.\n", default_color, interval=0)
         restart()
         return
 
-    strength = check_password_strength(password)
+    strength = pass_strength(password)
     clear()
-    Write.Print(f"Password Strength: {strength}\n", Colors.white, interval=0)
+    Write.Print(" Password  Checker\n", Head_Color, interval=0)
+    Write.Print(f"{strength}\n", default_color, interval=0)
+
+    save_choice = save_message()
+    if save_choice == 'y':
+        save_details(save_choice, "Password_Checker")
     restart()
 
-def fetch_wmn_data():
+def fetch_what_myname():
     try:
         response = requests.get("https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json", timeout=10)
         response.raise_for_status()
         return response.json()
     except:
-        Write.Print("[!] > Failed to fetch data from WhatsMyName repository.\n", Colors.red, interval=0)
+        Write.Print("\u2620 Failed to fetch data from WhatsMyName repository.\n", Error_Color, interval=0)
         return None
 
 def check_site(site, username, headers):
@@ -787,7 +926,8 @@ def generate_html_report(username, found_sites):
     </body>
     </html>"""
 
-    with open(f"username_check_report_{username}.html", "w") as report_file:
+    filename = f"Saves/username_report_{username}.html"
+    with open(filename, "w") as report_file:
         report_file.write(html_content)
 
 def username_check(username=None):
@@ -795,11 +935,11 @@ def username_check(username=None):
    
     if not username:
         clear()
-        Write.Print("[!] > No username provided.\n", Error_Color, interval=0)
+        Write.Print("\u2620 > No username provided.\n", Error_Color, interval=0)
         restart()
         return
 
-    data = fetch_wmn_data()
+    data = fetch_what_myname()
     if not data:
         restart()
         return
@@ -817,29 +957,31 @@ def username_check(username=None):
         with ThreadPoolExecutor(max_workers=20) as executor:
             futures = {executor.submit(check_site, site, username, headers): site for site in sites}
 
-            with tqdm(total=total_sites, desc="Checking sites") as pbar:
+            with tqdm(total=total_sites, desc="\U0001F422  Checking sites") as pbar:
                 for future in as_completed(futures):
                     try:
                         result = future.result()
                         if result:
                             site_name, uri_check = result
                             found_sites.append((site_name, uri_check))
-                            Write.Print(f"[+] Found on: {site_name}\n", Colors.green, interval=0)
-                            Write.Print(f"[+] Profile URL: {uri_check}\n", Colors.green, interval=0)
+                            Write.Print(f"\U0001F43C Found on: {site_name}\n", default_color, interval=0)
+                            Write.Print(f"\U0001F427 Profile URL: {uri_check}\n", default_color, interval=0)
                     except Exception:
                         pass
                     finally:
                         pbar.update(1)
 
         if found_sites:
-            Write.Print(f"\n[!] > Username found on {len(found_sites)} sites!\n", Colors.green, interval=0)
-            generate_html_report(username, found_sites)
-            Write.Print(f"\n[!] > Report saved: username_check_report_{username}.html\n", Colors.green, interval=0)
+            Write.Print(f"\n \U0001F427 > Username found on {len(found_sites)} sites!\n", default_color, interval=0)
+            save_choice = save_message()
+            if save_choice == 'y':
+                generate_html_report(username, found_sites)
+                Write.Print(f"\n \U0001F427 > Report saved: username_check_report_{username}.html\n", default_color, interval=0)
         else:
-            Write.Print(f"[!] > No results found for {username}.\n", Colors.red, interval=0)
+            Write.Print(f"\n \U0001F427 > No results found for {username}.\n", Exit_Color, interval=0)
 
     except Exception as e:
-        Write.Print(f"[!] > An error occurred: {str(e)}\n", Colors.red, interval=0)
+        Write.Print(f"\u2620 > An error occurred: {str(e)}\n", Error_Color, interval=0)
 
     restart()
 
@@ -1108,7 +1250,7 @@ def main():
 ║ [7]  │ Reverse DNS Search     │ Retrieves PTR records for an IP address    ║
 ║ [8]  │ Email Header Search    │ Retrieves info from an email header        ║
 ║ [9]  │ Email Breach Search    │ Retrieves email data breach info (HIBP)    ║
-║ [10] │ WHOIS Search           │ Retrieves domain registration data         ║
+║ [10] │ Domain Search          │ Retrieves domain registration data         ║
 ║ [11] │ Password Analyzer      │ Retrieves password strength rating         ║
 ║ [12] │ Username Search        │ Retrieves usernames from online accounts   ║
 ║ [13] │ Reverse Phone Search   │ Retrieves references to a phone number     ║
@@ -1247,24 +1389,25 @@ def main():
                 Write.Print(" Email Header Search \n", Head_Color, interval=0)
 
                 press_zero()
-                Write.Print(" \U0001F989 Paste the raw email headers below (end with an empty line):\n", default_color, interval=0)
+                
                
-                lines = []
+                
                 while True:
-                    line = input()
-                    if line.strip() == "0":
-                        clear()
-                        zero_pressed()
-                        break
-                    if not line.strip():
-                        break
-                    lines.append(line)
-                raw_headers = "\n".join(lines)
-                if not raw_headers.strip():
-                    clear()
-                    Write.Print("[!] > No email headers provided.\n", default_color, interval=0)
-                    continue
-                analyze_email_header(raw_headers)
+                    email_data = capture_email_input()
+
+                    if email_data is None:
+                        zero_pressed()  # Call the zeroPress function when input is canceled
+                        continue
+                    if not email_data.strip():
+                        print("[!] > No email data provided.\n")
+                        continue
+
+                    try:
+                        analyze_email_raw_data(email_data)
+                    except Exception as e:
+                        print(f"An error occurred while analyzing the email data: {e}")
+
+               
 
             elif choice == "9":
                 clear()
@@ -1285,7 +1428,7 @@ def main():
 
             elif choice == "10":
                 clear()
-                Write.Print(" Domain for WHOIS lookup\n", Head_Color, interval=0)
+                Write.Print(" Domain  lookup\n", Head_Color, interval=0)
                 press_zero()
                 domain = Write.Input("\U0001F989 Enter a Domain: ", default_color, interval=0)
 
@@ -1301,27 +1444,26 @@ def main():
                 whois_lookup(domain)
 
             elif choice == "11":
-                Write.Print(" Password Strength Checker\n", Head_Color, interval=0)
+                Write.Print(" Password  Checker\n", Head_Color, interval=0)
                 press_zero()
                 password = Write.Input(" \U0001F989 Enter password to evaluate strength:\n", default_color, interval=0)
                 if password == "0":
                     clear()
                     zero_pressed()
                 else:
-                 password_strength_tool(password)
+                 check_password(password)
 
             elif choice == "12":
                 clear()
                 Write.Print(" Username Check\n", Head_Color, interval=0)
                 press_zero()
-                usernam =  Write.Print(" \U0001F989 Enter Username to search: ", default_color, interval=0)
+                usernam =  Write.Input(" \U0001F989 Enter Username to search: ", default_color, interval=0)
                 
                 if usernam == "0":
                     clear()
                     zero_pressed()
-                    continue
-
-                username_check(usernam.strip())
+                else:
+                    username_check(usernam.strip())
 
             elif choice == "13":
                 clear()
