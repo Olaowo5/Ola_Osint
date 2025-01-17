@@ -1389,7 +1389,7 @@ def read_file_metadata(file_path):
                     else:
                         metaData_extra.append("No EXIF data found.")    
                     
-                    
+
         elif(file_type == "application/pdf"):
             with open(file_path, "rb") as pdf_file:
                 pdf_reader = PyPDF2.PdfReader(pdf_file)
@@ -1580,14 +1580,8 @@ def read_file_metadata(file_path):
     
     restart()
 
+def Front_Page():
 
-
-
-def main():
-    while True:
-        try:
-            clear()
-            
             T = "OLA" #input("Enter Text you want to convert to ASCII art : ")
             P = "MIDE"
             ASCII_art_1 = pyfiglet.figlet_format(T, font='isometric1')
@@ -1602,6 +1596,18 @@ def main():
             author = "🛡️ By Olamide Owolabi - Hello World! 🛡️"
             Write.Print(author + "\n[C.I.T]\n OSint Info Tool\n", Colors.white, interval=0)
 
+
+
+
+
+def main():
+    while True:
+        try:
+            clear()
+
+            Front_Page()
+            
+           
             menu = """
 ╔════════════════════════════════════════════════════════════════════════════╗
 ║  №   │      Function          │ Description                                ║
@@ -1612,7 +1618,6 @@ def main():
 ║ [4]  │ DNS Search             │ Retrieves DNS records (A, CNAME, MX, NS)   ║
 ║ [5]  │ Email Search           │ Retrieves MX info for an email             ║
 ║ [6]  │ Person Name Search     │ Retrieves extensive person-related data    ║
-║ [7]  │ Reverse DNS Search     │ Retrieves PTR records for an IP address    ║
 ║ [8]  │ Email Header Search    │ Retrieves info from an email header        ║
 ║ [9]  │ Email Breach Search    │ Retrieves email data breach info (HIBP)    ║
 ║ [10] │ Domain Search          │ Retrieves domain registration data         ║
@@ -1959,15 +1964,7 @@ def settings():
     while True:
         try:
             clear()
-            print("\033[1;31m   ██████╗██╗        █████╗ ████████╗███████╗")
-            print("   ██╔════╝██║       ██╔══██╗╚══██╔══╝██╔════╝")
-            print("   ██║     ██║       ███████║   ██║   ███████╗")
-            print("   ██║     ██║       ██╔══██║   ██║   ╚════██║")
-            print("   ██████╗ ███████╗  ██║  ██║   ██║   ███████║")
-            print("   ╚═════╝ ╚══════╝  ╚═╝  ╚═╝   ╚═╝   ╚══════╝\033[0m")
-            print("\033[1;34mC       L      A       T       S       C       O       P       E\033[0m   \033[1;31m(Version 1.0.0)\033[0m")
-            author = "🛡️ By Olamide Owolabi - Hello World! 🛡️"
-            Write.Print(author + "\n[C.I.T]\nClatScope Info Tool\n", Colors.yellow, interval=0)
+            Front_Page()
 
             settings_menu = """╭─    ─╮╭─                   ─╮╭─                                         ─╮
 |  №   ||       Setting       ||                Description                |
