@@ -26,6 +26,26 @@ from email import message_from_string
 from email.policy import default
 import re
 import hashlib
+import magic
+import stat
+from PIL import Image
+from PIL.ExifTags import TAGS, GPSTAGS
+import PyPDF2
+
+import openpyxl
+import docx
+from docx.opc.constants import RELATIONSHIP_TYPE as RT
+from pptx import Presentation
+
+from mutagen.easyid3 import EasyID3
+from mutagen.mp3 import MP3
+from mutagen.mp4 import MP4
+from mutagen.id3 import ID3
+from mutagen.flac import FLAC
+import wave
+from mutagen.oggvorbis import OggVorbis
+from tinytag import TinyTag
+
 
 
 
@@ -859,7 +879,7 @@ def check_password(password=None):
 
     save_choice = save_message()
     if save_choice == 'y':
-        save_details(save_choice, "Password_Checker")
+        save_details(strength, "Password_Checker")
     restart()
 
 def fetch_what_myname():
@@ -1042,10 +1062,8 @@ def reverse_phone_lookup(phone_number):
 
 
 def check_ssl_cert(domain):
-    """
-    Fetch SSL certificate information for a given domain using Python's
-    built-in ssl and socket libraries.
-    """
+    clear()
+    Write.Print("SSL Certificate Search\n", Head_Color, interval=0)
     try:
         context = ssl.create_default_context()
         with socket.create_connection((domain, 443), timeout=10) as sock:
@@ -1063,17 +1081,20 @@ def check_ssl_cert(domain):
         not_after_dt = datetime.strptime(not_after, "%b %d %H:%M:%S %Y %Z")
 
         info_text = f"""
-╭─{' '*78}─╮
-|{' '*33}SSL Certificate Info{' '*32}|
-|{'='*80}|
-| [+] > Domain:       {domain:<58}|
-| [+] > Issued To:    {issued_to:<58}|
-| [+] > Issued By:    {issued_by:<58}|
-| [+] > Valid From:   {str(not_before_dt):<58}|
-| [+] > Valid Until:  {str(not_after_dt):<58}|
-╰─{' '*78}─╯
+
+|{' '*29}SSL Certificate Info{' '*29}|
+|{'='*78}|
+|  Domain:       ||  {domain:<58}|
+|  Issued To:    ||  {issued_to:<58}|
+|  Issued By:    ||  {issued_by:<58}|
+|  Valid From:   ||  {str(not_before_dt):<58}|
+|  Valid Until:  ||  {str(not_after_dt):<58}|
+
 """
         Write.Print(info_text, Colors.white, interval=0)
+        save_choice = save_message()
+        if save_choice == 'y':
+            save_details(info_text, "SSL_Certificate")
 
     except ssl.SSLError as e:
         Write.Print(f"[!] > SSL Error: {str(e)}\n", Colors.red, interval=0)
@@ -1095,10 +1116,10 @@ def check_robots_and_sitemap(domain):
         f"https://{domain}/sitemap.xml"
     ]
     result_text = f"""
-╭─{' '*78}─╮
+
 |{' '*32}Site Discovery{' '*32}|
 |{'='*80}|
-| [+] > Domain:  {domain:<63}|
+|   Domain:    {domain:<66}|
 |{'-'*80}|
 """
 
@@ -1126,16 +1147,18 @@ def check_robots_and_sitemap(domain):
             result_text += f"| Error: {str(e)}\n"
             result_text += f"|{'='*80}|\n"
 
-    result_text += f"╰─{' '*78}─╯"
+    
     Write.Print(result_text, Colors.white, interval=0)
+    save_choice = save_message()
+    if save_choice == 'y':
+            save_details(result_text, "Sitemap_RobotsTxt")
     restart()
 
 
 def check_dnsbl(ip_address):
-    """
-    Checks whether an IP is listed in common DNS blacklists (DNSBLs).
-    This does not require an external API — only DNS queries.
-    """
+    
+    Write.Print(" \U0001F422 Checking whether the IP is listed in common DNS blacklists (DNSBLs) ",
+                Colors.green,interval=0)
     dnsbl_list = [
         "zen.spamhaus.org",
         "bl.spamcop.net",
@@ -1160,11 +1183,11 @@ def check_dnsbl(ip_address):
             results.append((dnsbl, f"Error: {str(e)}"))
 
     report = f"""
-╭─{' '*78}─╮
-|{' '*33}DNSBL Check{' '*34}|
-|{'='*80}|
-| [+] > IP: {ip_address:<67}|
-|{'-'*80}|
+
+|{' '*27}DNS BlackList Check{' '*28}|
+|{'='*75}|
+|  IP: {ip_address:<67}|
+|{'-'*75}|
 """
     if results:
         report += "| The IP is listed on the following DNSBL(s):\n"
@@ -1173,16 +1196,16 @@ def check_dnsbl(ip_address):
     else:
         report += "| The IP is NOT listed on the tested DNSBL(s).\n"
 
-    report += f"╰─{' '*78}─╯"
+    clear()
     Write.Print(report, Colors.white, interval=0)
+    save_choice = save_message()
+    if save_choice == 'y':
+            save_details(report, "DNSBL_Check")
     restart()
 
 
 def fetch_webpage_metadata(url):
-    """
-    Fetch webpage metadata like <title>, meta description, and keywords.
-    Uses BeautifulSoup, no external APIs required.
-    """
+   
     headers = {
         "User-Agent": "Mozilla/5.0"
     }
@@ -1200,19 +1223,361 @@ def fetch_webpage_metadata(url):
         keywords = meta_keyw["content"] if meta_keyw and "content" in meta_keyw.attrs else "N/A"
 
         result_text = f"""
-╭─{' '*78}─╮
-|{' '*31}Webpage Metadata{' '*31}|
+
+|{' '*27}Webpage Metadata{' '*30}|
 |{'='*80}|
-| [+] > URL:         {url:<58}|
-| [+] > Title:       {title:<58}|
-| [+] > Description: {description:<58}|
-| [+] > Keywords:    {keywords:<58}|
-╰─{' '*78}─╯
+|  URL:         || {url:<58}|
+|  Title:       || {title:<58}|
+|  Description: || {description:<58}|
+|  Keywords:    || {keywords:<58}|
+
 """
         Write.Print(result_text, Colors.white, interval=0)
+        save_choice = save_message()
+        if save_choice == 'y':
+            save_details(result_text, "Web_Metadata")
     except Exception as e:
         Write.Print(f"[!] > Error fetching metadata: {str(e)}\n", Colors.red, interval=0)
 
+    restart()
+
+def read_file_metadata(file_path):
+
+    clear()
+    Write.Print(f"\U0001F422 Checking File Data\n {file_path}", Colors.green, interval=0)
+
+    def timeConvert(atime):
+        dt = atime
+        newtime = datetime.fromtimestamp(dt)
+        return newtime.date()
+        
+    def sizeFormat(size):
+         newsize= format(size/1024, ".2f")
+         return newsize + " KB"
+
+    try:
+        # Check if the file exists
+        if not os.path.exists(file_path):
+            raise FileNotFoundError(f"File {file_path} does not exist.")
+        
+        Dfile = os.stat(file_path)
+
+        file_size = sizeFormat(Dfile.st_size) 
+
+        file_name = os.path.basename(file_path)
+        
+        max_length = 60  # Set maximum length
+        
+        file_creation_time = timeConvert(Dfile.st_birthtime)
+        file_modification_time = timeConvert(Dfile.st_mtime)
+        file_last_Access_Date = timeConvert(Dfile.st_atime)
+
+        mime = magic.Magic(mime=True)
+        file_type = mime.from_file(file_path)
+        metaData_extra = []
+        author = None
+        owner = Dfile.st_uid
+
+
+        def get_permission_string(file_mode):
+                # Define rwx attributes
+                permissions = [
+                    stat.S_IRUSR, stat.S_IWUSR, stat.S_IXUSR,  # Owner permissions
+                    stat.S_IRGRP, stat.S_IWGRP, stat.S_IXGRP,  # Group permissions
+                    stat.S_IROTH, stat.S_IWOTH, stat.S_IXOTH   # Others permissions
+                ]
+
+                # Generate a readable string for permissions
+                labels = ['Owner', 'Group', 'Other']
+                permission_descriptions = []
+                
+                for i, label in enumerate(labels):
+                    read = 'Yes' if file_mode & permissions[i * 3] else 'No'
+                    write = 'Yes' if file_mode & permissions[i * 3 + 1] else 'No'
+                    execute = 'Yes' if file_mode & permissions[i * 3 + 2] else 'No'
+                    description = f"{label} {{Read: {read}, Write: {write}, Execute: {execute}}}"
+                    permission_descriptions.append(description)
+
+                return ', '.join(permission_descriptions)
+        
+        def gps_extract(exif_dict):
+            gps_metadata = exif_dict['GPSInfo']
+
+            #latitudinal information
+            #positive latitudes are north of the equator, negative latitudes are south of the equator
+            lat_ref_num = 0
+            if gps_metadata['GPSLatitudeRef'] == 'N':
+                lat_ref_num += 1
+            if gps_metadata['GPSLatitudeRef'] == 'S':
+                lat_ref_num -= 1
+
+            lat_list = [float(num) for num in gps_metadata['GPSLatitude']]
+            lat_coordiante = (lat_list[0]+lat_list[1]/60+lat_list[2]/3600) * lat_ref_num
+
+            #longitudinal information
+            #positive longitudes are east of the prime meridian, negative longitudes are west of the prime meridian
+            long_ref_num = 0
+            if gps_metadata['GPSLongitudeRef'] == 'E':
+                long_ref_num += 1
+            if gps_metadata['GPSLongitudeRef'] == 'W':
+                long_ref_num -= 1
+
+            long_list = [float(num) for num in gps_metadata['GPSLongitude']]
+            long_coordiante = (long_list[0]+long_list[1]/60+long_list[2]/3600) * long_ref_num
+
+            
+            #return the latitude and longitude as a tuple
+            return (lat_coordiante,long_coordiante)
+
+        #permissions = oct(stat.S_IMODE(Dfile.st_mode))
+        permissions = get_permission_string(Dfile.st_mode)
+       
+        
+        if(file_type.startswith("image")):
+            with Image.open(file_path) as img:
+                #tags = img.tag_v2
+                metaData_extra.append(f"|{' '*32}Image MetaData{' '*32}|")
+                metaData_extra.append(f"|{'-'*78}|")
+
+                # extract other basic metadata
+                info_dict = {
+                    "Filename": img.filename,
+                    "Image Size": img.size,
+                    "Image Height": img.height,
+                    "Image Width": img.width,
+                    "Image Format": img.format,
+                    "Image Mode": img.mode     
+                    
+                }
+
+                for label,value in info_dict.items():
+                    metaData_extra.append(f"|  {str(label):<10}: ||  {str(value)[:max_length]:<60}|")
+
+                if img.format == 'TIFF':
+                    for tag_id, value in img.tag_v2.items():
+                        tag_name = TAGS.get(tag_id, tag_id)
+                        metaData_extra.append(f"|  {str(tag_name):<10}: ||  {str(value)[:max_length]:<60}|")
+
+                elif(file_path.endswith('.png')): 
+                     for key, value in img.info.items():
+                        metaData_extra.append(f"|  {str(key):<10}: ||  {str(value)[:max_length]:<60}|")
+                else:        
+                    imdata = img._getexif()
+                    if imdata: 
+                        #Get General Metadata
+                        #{file_path:<60}
+                        for tag_id in imdata:
+                            # get the tag name, instead of human unreadable tag id
+                            tag = TAGS.get(tag_id, tag_id)
+                            data = imdata.get(tag_id)
+
+                            if(tag == "GPSInfo"):
+                                gps = gps_extract(imdata)
+                                metaData_extra.append(f"|  GPS Coordinates: ||  {gps}  |")
+                                continue
+
+                            # decode bytes 
+                            if isinstance(data, bytes):
+                                try:
+                                    data = data.decode('utf-8', errors='ignore')  # Ignore encoding errors
+                                except UnicodeDecodeError:
+                                    data = '<Unintelligible Data>'
+                    
+                            #print(f"{tag:25}: {data}")
+                            metaData_extra.append(f"|  {str(tag):<10}: ||  {str(data)[:max_length]:<60}|")
+            
+                    else:
+                        metaData_extra.append("No EXIF data found.")    
+                    
+                    
+        elif(file_type == "application/pdf"):
+            with open(file_path, "rb") as pdf_file:
+                pdf_reader = PyPDF2.PdfReader(pdf_file)
+                #author = pdf_reader.getDocumentInfo().author
+                #author = pdf_reader.
+                pdf_data = pdf_reader.metadata
+                metaData_extra.append(f"|{' '*32}PDF Metadata{' '*32}|")
+                metaData_extra.append(f"|{'-'*78}|")
+                if pdf_data:
+                    for key, value in pdf_data.items():
+                        metaData_extra.append(f"|  {str(key):<10}:  || {str(value)[:max_length]:<60}|")
+
+                    if pdf_reader.is_encrypted:
+                        metaData_extra.append(f"|  Encrypted: || Yes      |")
+                    else:
+                        metaData_extra.append(f"|  Encrypted: || No      |")
+                else:
+                    metaData_extra.append("No PDF metadata found.")
+                 
+        elif(file_path.endswith(('.doc', '.docx'))):
+            doc = docx.Document(file_path)
+            core_properties = doc.core_properties
+            doc_metadata = f"""
+|{' '*32}Document Properties{' '*32}
+|{'='*78}|
+| Title:   || {str(core_properties.title) :<60}|
+| Author:  || {str(core_properties.author) :<60}| 
+| Subject: || {str(core_properties.subject) :<60}|
+| Keywords:|| {str(core_properties.keywords) :<60}|
+| Last Modified By: || {str(core_properties.last_modified_by) :<60}|
+| Created: || {str(core_properties.created) :<60}|
+| Modified:|| {str(core_properties.modified) :<60}|
+| Category:|| {str(core_properties.category) :<60}|
+| Content Status: || {str(core_properties.content_status) :<60}|
+| Version: || {str(core_properties.version) :<60}|
+| Revision: || {str(core_properties.revision) :<60}|
+| Comments: || {str(core_properties.comments) :<60}|
+            """
+
+            metaData_extra.append(doc_metadata)    
+
+        elif(file_path.endswith(('.xlsx', '.xlsm'))):
+          
+                # Load the workbook
+                workbook = openpyxl.load_workbook(file_path, data_only=True)
+                
+                # Access metadata
+                properties = workbook.properties
+                
+                excel_metadata = f"""
+|{' '*32}Excel Document Properties{' '*32}
+|{'='*78}|
+| Title:        || {str(properties.title) :<60}|
+| Author:       || {str(properties.creator) :<60}|
+| Keywords:     || {str(properties.keywords) :<60}|
+| Last Modified By: || {str(properties.lastModifiedBy) :<60}|
+| Created:      || {str(properties.created) :<60}|
+| Modified:     || {str(properties.modified) :<60}|
+| Category:     || {str(properties.category) :<60}|
+| Description:  || {str(properties.description) :<60}|
+                """
+                metaData_extra.append(excel_metadata)    
+
+        elif(file_path.endswith(('.pptx', '.pptm'))):
+            try:
+                # Load the PowerPoint presentation
+                presentation = Presentation(file_path)
+                
+                
+                core_properties = presentation.core_properties
+
+                pptx_metadata = f"""
+|{' '*32}PowerPoint Document Properties{' '*31}|
+|{'='*78}|
+| Title:            || {str(core_properties.title) :<60}|
+| Author:           || {str(core_properties.author) :<60}|
+| Keywords:         || {str(core_properties.keywords) :<60}|
+| Last Modified By: || {str(core_properties.last_modified_by) :<60}|
+| Created:          || {str(core_properties.created) :<60}|
+| Modified:         || {str(core_properties.modified) :<60}|
+| Category:         || {str(core_properties.category) :<60}|
+| Description:      || {str(core_properties.subject) :<60}|
+                """
+
+                
+                metaData_extra.append(pptx_metadata)
+                
+            except Exception as e:  
+                metaData_extra.append(f"[Error] Could not read PowerPoint metadata: {e}")
+
+        elif(file_type.startswith("audio")):
+            try:
+                    
+                    metaData_extra.append(f"|{' '*32}Audio MetaData{' '*32}|")
+                    metaData_extra.append(f"|{'-'*78}|")
+                     
+
+                    tinytim = TinyTag.get(file_path)
+
+                    if(tinytim):
+                        metaData_extra.append(f"|  Title:    || {str(tinytim.title)[:max_length]:<60}|")
+                        metaData_extra.append(f"|  Artist:   || {str(tinytim.artist)[:max_length]:<60}|")
+                        metaData_extra.append(f"|  Genre:    || {str(tinytim.genre)[:max_length]:<60}|")
+                        metaData_extra.append(f"|  Album:    || {str(tinytim.album)[:max_length]:<60}|")
+                        metaData_extra.append(f"| Year Released: || {str(tinytim.year)[:max_length]:<60}|")
+                        metaData_extra.append(f"|  Composer: || {str(tinytim.composer)[:max_length]:<60}|")
+                        metaData_extra.append(f"|  AlbumArtist: || {str(tinytim.albumartist)[:max_length]:<60}|")
+                        metaData_extra.append(f"|  TrackTotal: || {str(tinytim.track_total)[:max_length]:<60}|")
+                        metaData_extra.append(f"|  Duration: || {f'{tinytim.duration:.2f} seconds':<60}|")
+                        metaData_extra.append(f"|  Bitrate:  || {str(tinytim.bitrate) + ' kbps':<60}|")
+                        metaData_extra.append(f"|  Sample Rate: || {str(tinytim.samplerate) + ' Hz':<60}|")
+                        metaData_extra.append(f"|  Channels: || {str(tinytim.channels):<60}|")
+
+
+
+
+
+                    if(file_path.endswith('.mp3')):
+                        audio = MP3(file_path, ID3=ID3)
+                    elif(file_path.endswith('.wav')):
+                        audio = wave.open(file_path, 'rb')
+                    elif(file_path.endswith('.flac')):
+                        audio = FLAC(file_path)
+                    elif(file_path.endswith('.ogg')):
+                        audio = OggVorbis(file_path)
+                    elif(file_path.endswith(('.m4a', '.mp4'))):
+                        audio = MP4(file_path)
+                    else:
+                        audio = None
+                    
+                    if(audio is None):
+                        metaData_extra.append(" \U0001F427 Cant Read Audio File for metadata.\n Unsopported")
+                    else:
+                        if hasattr(audio, 'items') and audio.items():
+                            for tag, value in audio.items():
+                                metaData_extra.append(f"|  {str(tag):<10}: ||  {str(value)[:max_length]:<60}|")
+
+                            # Extract specific metadata based on format
+                            #if isinstance(audio, MP3) or isinstance(audio, FLAC) or isinstance(audio, OggVorbis) or isinstance(audio, MP4):
+                            #        if hasattr(audio.info, 'bitrate'):
+                            #            metaData_extra.append(f"|  Bitrate:  || {str(audio.info.bitrate // 1000) + ' kbps':<60}|")
+
+                            #        metaData_extra.append(f"|  Length: || {str(f'{audio.info.length:.2f}') + ' seconds':<60}|")
+
+                            #        if hasattr(audio.info, 'channels'):
+                            #            metaData_extra.append(f"|  Channels: || {str(audio.info.channels):<60}|")
+
+                            #        metaData_extra.append(f"|  Sample Rate: || {str(audio.info.sample_rate) + ' Hz':<60}|")
+                        
+            except Exception as e:
+                metaData_extra.append(f"Error processing file: {str(e)}")      
+                    
+
+
+
+        clear()
+        #Write.Print(f"Creation data {file_creation_time}", Colors.green, interval=0)
+        
+
+        
+        metadata_summary = f"""
+|{' '*32}File Metadata{' '*33}|
+|{'='*78}|
+|  File Path:   || {file_path:<60}|
+|  File Name:   || {file_name:<60}|
+|  File Size:   || {file_size:<60}|
+|  File Type:   || {file_type:<60}|
+|  Permission:  || {permissions:<60}|
+
+|  Created:     || {str(file_creation_time):<60}|
+|  Modified:    || {str(file_modification_time):<60}|
+|  Last Access: || {str(file_last_Access_Date):60}|
+"""
+
+        metadata_summary += "\n".join(metaData_extra)
+
+        metadata_summary += "\n" + "="*78 + "\n"
+       
+        Write.Print(metadata_summary, Colors.white, interval=0)
+
+        
+        save_choice = save_message()
+        if save_choice == 'y':
+            save_details(metadata_summary, "File_Metadata")
+
+    except Exception as e:    
+        Write.Print(f" \u2620 Error reading file metadata: {str(e)}",Error_Color, interval=0)
+    
     restart()
 
 
@@ -1258,6 +1623,7 @@ def main():
 ║ [15] │ Robots.txt/Sitemap     │ Retrieves robots.txt & sitemap.xml info    ║
 ║ [16] │ DNSBL Check            │ Retrieves IPDNS blacklist info             ║
 ║ [17] │ Web Metadata Info      │ Retrieves meta tags and more from a webpage║
+║ [18] │ File Metadata Info     │ Retrieves meta data from file path         ║
 ╠══════╪════════════════════════╪════════════════════════════════════════════╣
 ║ [0]  │ Exit                   │ Exit the program                           ║
 ║ [99] │ Settings               │ Customize tool                             ║
@@ -1543,7 +1909,7 @@ def main():
                 Write.Print(" Web Metadata Info \n", Head_Color, interval=0)
                 press_zero()
 
-                url = Write.Input(" \U0001F989 URL for metadata extraction: ", default_color, interval=0)
+                url = Write.Input(" \U0001F989 URL for metadata extraction: (include https:// )", default_color, interval=0)
                 if url == "0":
                     clear()
                     zero_pressed()
@@ -1551,9 +1917,26 @@ def main():
 
                 if not url:
                     clear()
-                    Write.Print("[!] > Enter a URL\n", default_color, interval=0)
+                    Write.Print("  Enter a URL with https:// \n", default_color, interval=0)
                     continue
                 fetch_webpage_metadata(url)
+
+            elif choice == "18":
+                clear()
+                Write.Print(" File Metadata Info \n", Head_Color, interval=0)
+                press_zero()
+
+                file_path = Write.Input(" \U0001F989 Enter the path to the file: ", default_color, interval=0)
+                if file_path == "0":
+                    clear()
+                    zero_pressed()
+                    continue
+
+                if not file_path:
+                    clear()
+                    Write.Print("  Enter a valid file path\n", default_color, interval=0)
+                    #continue
+                read_file_metadata(file_path)    
 
             elif choice == "0":
                 clear()
