@@ -1243,6 +1243,7 @@ def fetch_webpage_metadata(url):
 
 def read_file_metadata(file_path):
 
+    file_path = file_path.strip().strip('"').strip("'")
     clear()
     Write.Print(f"\U0001F422 Checking File Data\n {file_path}", Colors.green, interval=0)
 
@@ -1580,6 +1581,455 @@ def read_file_metadata(file_path):
     
     restart()
 
+def hudson_rock_email():
+    #clear()
+
+    emaila = Write.Input("\U0001F989 Enter email to check infection status: ", default_color, interval=0)
+
+    try:
+        v = validate_email(emaila)
+        emailrs = v.email
+        Write.Print(f" Valid email: {emailrs}", Colors.green, interval=0)
+    except EmailNotValidError as e:
+        Write.Print(f" Invalid email format: {str(e)}", Error_Color, interval=0)
+        restart()
+        return
+    try:
+        url = "https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-email"
+        params = {"email": emaila}
+        resp = requests.get(url, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        #clear()
+        Write.Print(f"\n\U0001F43C Hudson Rock email infection check results for {emaila}:\n", Colors.green, interval=0)
+        #Write.Print(json.dumps(data, indent=2), Colors.white, interval=0)
+
+
+        messageData = data['message']
+        HudsonRock_Summary = f"""
+|{' '*32}HudsonRock Email Summary{' '*33}|
+|{'='*78}|
+|  Email:   || {emailrs:<60}|
+|                           |
+|  Message:  
+        {messageData}
+
+|{'-'*78}|
+"""
+
+        stealers = data.get('stealers', [])
+        
+        # Check if the stealers list is empty
+        if not stealers:
+            #print("Stealers: None")
+            HudsonRock_Summary += f"""|  Stealers: || {('None'):<60}|\n"""
+        else:
+            #print("Stealers:")
+           # Initialize the table string
+            table_str = f"{'=' * 80}\n| {'Stealers Data':^76} |\n{'=' * 80}\n"
+
+            # Iterate over stealers and format each as a row in the table
+            for i, stealer in enumerate(stealers, start=1):
+                antiviruses = ', '.join(stealer.get('antiviruses', []))
+                top_passwords = ', '.join(stealer.get('top_passwords', []))
+                top_logins= ', '.join(stealer.get('top_logins', []))
+                table_str += (
+                    f"| {'Stealer':<15} | {i:<60}|\n"
+                    f"| {'-' * 78}|\n"
+                    f"| {'Computer Name':<15} | {stealer.get('computer_name', 'Unknown'):<60}|\n"
+                    f"| {'Operating System':<15} | {stealer.get('operating_system', 'Unknown'):<60}|\n"
+                    f"| {'Malware Path':<15} | {stealer.get('malware_path', 'Unknown'):<60}|\n"
+                    f"| {'Date Compromised':<15} | {stealer.get('date_compromised', 'Unknown'):<60}|\n"
+                    f"| {'IP Address':<15} | {stealer.get('ip', 'Unknown'):<60}|\n"
+                    f"| {'Antiviruses':<15} | {antiviruses:<60}|\n"
+                    f"| {'Top Passwords':<15} | {top_passwords:<60}|\n"
+                    f"| {'Top Logins':<15} | {top_logins:<60}|\n"
+                    f"{'-' * 80}\n"
+                )
+             #Write.Print(table_str, Colors.white, interval=0)       
+            HudsonRock_Summary += table_str 
+       
+
+        HudsonRock_Summary += f""" 
+|{'='*78}|
+|  Total Corporate Services:   || {(data['total_corporate_services']):<60}|
+|  Total User Services:   || {(data['total_user_services']):<60}|
+|{'-'*78}|
+        
+        """
+
+
+
+        Write.Print(HudsonRock_Summary, Colors.white, interval=0)
+        save_choice = save_message()
+        if save_choice == 'y':
+            save_details(HudsonRock_Summary, "HudosnRock_Email") 
+    except requests.exceptions.Timeout:
+        #clear()
+        Write.Print("[!] > Request timed out when contacting Hudson Rock.\n", default_color, interval=0)
+    except Exception as e:
+        #clear()
+        Write.Print(f"[!] > Error: {str(e)}", default_color, interval=0)
+
+       
+    restart()
+
+def hudson_rock_domain():
+    domainola = Write.Input("\U0001F989 Enter domain to check infection status: ", default_color, interval=0)
+
+    if not domainola:
+        clear()
+        Write.Print("\u2620 No domain provided.\n", Error_Color, interval=0)
+        restart()
+        return
+   
+    try:
+        url = "https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-domain"
+        params = {"domain": domainola}
+        resp = requests.get(url, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        #clear()
+        Write.Print(f"\n \U0001F43C Hudson Rock domain infection check results for {domainola}:\n", Colors.green, interval=0)
+        #Write.Print(json.dumps(data, indent=2), Colors.white, interval=0)
+
+        Write.Print(f"\n \U0001F422 Checking Domain {domainola}:\n", Colors.green, interval=0)
+
+
+        #messageData = data['message']
+        HudsonRock_Summary = f"""
+|{' '*32}HudsonRock Domain Summary{' '*33}|
+|{'='*78}|
+|  Total:   || {(data['total']):<60}|
+| Total Stealers: || {(data['totalStealers']):<40}|
+|  Employees:   || {(data['employees']):<60}|
+|  Users:   || {(data['users']):<60}|
+|  Third Parties:   || {(data['third_parties']):<60}|
+|  Logo:   || {(data['logo']):<60}|
+|{'-'*78}|
+"""
+
+        Write.Print(f"\n \U0001F422 Check ii", Colors.green, interval=0)
+        dataii = data.get('data', [])
+        
+        # Check if the stealers list is empty
+        if not dataii:
+            #print("Stealers: None")
+            HudsonRock_Summary += f"""|  Data: || {('None'):<60}|\n"""
+        else:
+            #print("Stealers:")
+           # Initialize the table string
+            table_str = f"{'=' * 80}\n| {'Data':^76} |\n{'=' * 80}\n"
+
+            # Process each list of URLs
+            all_categories = ['employees_urls', 'clients_urls', 'all_urls']
+            for category in all_categories:
+                urls = data['data'].get(category, [])
+                if urls:
+                    table_str += f"\n| {category.replace('_', ' ').title():<78} |\n{'-' * 80}\n"
+                    for i, url_data in enumerate(urls, start=1):
+                        table_str += (
+                            f"| {'Entry':<15} | {i:<60}|\n"
+                            f"| {'Occurrence':<15} | {url_data.get('occurrence', 'Unknown'):<60}|\n"
+                            f"| {'Type':<15} | {url_data.get('type', 'Unknown'):<60}|\n"
+                            f"| {'URL':<15} | {url_data.get('url', 'Unknown'):<60}|\n"
+                            f"{'-' * 80}\n"
+                        )
+                    #Write.Print(table_str, Colors.white, interval=0)       
+                    HudsonRock_Summary += table_str 
+       
+       
+        HudsonRock_Summary += f""" 
+|{'='*78}|
+|  Total Urls:   || {(data['totalUrls']):<60}|
+|{'-'*78}|
+        
+        """
+
+        stats = data.get('stats', [])
+
+        if not stats:
+            HudsonRock_Summary += f"|  No stats available.\n"
+        else:
+            employees_urls = stats['employees_urls']
+            clients_urls = stats['clients_urls']
+            employees_count = stats['employees_count']
+            clients_count = stats['clients_count']
+
+            # Format the employee URLs and counts
+            table_str += f"\n| {'Employees URLs and Counts':<78} |\n{'-' * 80}\n"
+            for i, (url, count) in enumerate(zip(employees_urls, employees_count), start=1):
+                table_str += (
+                    f"| {'Entry':<15} | {i:<60}|\n"
+                    f"| {'URL':<15} | {url:<60}|\n"
+                    f"| {'Count':<15} | {count:<60}|\n"
+                    f"{'-' * 80}\n"
+                )
+
+            # Format the client URLs and counts
+            table_str += f"\n| {'Clients URLs and Counts':<78} |\n{'-' * 80}\n"
+            for i, (url, count) in enumerate(zip(clients_urls, clients_count), start=1):
+                table_str += (
+                    f"| {'Entry':<15} | {i:<60}|\n"
+                    f"| {'URL':<15} | {url:<60}|\n"
+                    f"| {'Count':<15} | {count:<60}|\n"
+                    f"{'-' * 80}\n"
+                )
+    
+            
+            HudsonRock_Summary += f"""
+|{'='*78}|
+|{' '*32}Stats Summary{' '*33}|
+|{'-'*78}|
+|  Total Employees:   || {(stats['totalEmployees']):<40}|
+|  Total Users: || {(stats['totalUsers']):<40}|
+ """
+            HudsonRock_Summary += table_str
+
+
+            HudsonRock_Summary += f"| {'Shopify Status':<15} | {('Yes' if data['is_shopify'] else 'No'):<60}|\n"
+            HudsonRock_Summary += f"| {'Last Employee Compromised':<27} | {data['last_employee_compromised']:<46}|\n"
+            HudsonRock_Summary += f"| {'Last User Compromised':<27} | {data['last_user_compromised']:<46}|\n"
+
+             # Password Statistics Section
+            HudsonRock_Summary += f"\n{'-' * 80}\n| {'Employee Password Stats':<78} |\n{'-' * 80}\n"
+            emp_pass = data['employeePasswords']
+
+            if(emp_pass is None):
+                HudsonRock_Summary += f"|  Employee Passwords: || {('None'):<60}|\n"
+            else:  
+                HudsonRock_Summary += f"""
+|{' '*16}Employee Passwords Summary {' '*16}|
+| {'Total':<24} | {emp_pass['totalPass']:<51}|"
+| {'Too Weak':<24} | Qty: {emp_pass['too_weak']['qty']}, Perc: {emp_pass['too_weak']['perc']}%<40 |"
+| {'Weak':<24} | Qty: {emp_pass['weak']['qty']}, Perc: {emp_pass['weak']['perc']}%<40 |"
+| {'Medium':<24} | Qty: {emp_pass['medium']['qty']}, Perc: {emp_pass['medium']['perc']}%<40 |"
+| {'Strong':<24} | Qty: {emp_pass['strong']['qty']}, Perc: {emp_pass['strong']['perc']}%<40 |"
+"""
+
+            HudsonRock_Summary += f"\n{'-' * 80}\n| {'User Password Stats':<78} |\n{'-' * 80}\n"
+
+            
+            user_pass = data['userPasswords']
+            if(user_pass is None):
+                HudsonRock_Summary += f"|  User Passwords: || {('None'):<60}|\n"
+            else:
+                HudsonRock_Summary += f"""
+|{' '*16}User Passwords Summary {' '*16}|
+| {'Total':<24} | {user_pass['totalPass']:<51}|"
+| {'Too Weak':<24} | Qty: {user_pass['too_weak']['qty']}, Perc: {user_pass['too_weak']['perc']}%<40 |"
+| {'Weak':<24} | Qty: {user_pass['weak']['qty']}, Perc: {user_pass['weak']['perc']}%<40 |\n"
+| {'Medium':<24} | Qty: {user_pass['medium']['qty']}, Perc: {user_pass['medium']['perc']}%<40 |"
+| {'Strong':<24} | Qty: {user_pass['strong']['qty']}, Perc: {user_pass['strong']['perc']}%<40 |"
+
+            """
+            
+            # Antivirus Section
+            antiviruses = data['antiviruses']
+
+            if antiviruses is None:
+                HudsonRock_Summary += f"|  Antiviruses: || {('None'):<60}|\n"
+            else:    
+                HudsonRock_Summary += f"\n{'-' * 80}\n| {'Antivirus Stats':<78} |\n{'-' * 80}\n"
+                HudsonRock_Summary += (
+                    f"| {'Total':<24} | {antiviruses['total']:<51}|\n"
+                    f"| {'Found':<24} | {antiviruses['found']}%{' ':<59}|\n"
+                    f"| {'Not Found':<24} | {antiviruses['not_found']}%{' ':<59}|\n"
+                    f"| {'Free':<24} | {antiviruses['free']}%{' ':<59}|\n"
+                )     
+
+                # Antivirus List
+                if 'list' in antiviruses:
+                    HudsonRock_Summary += f"\n| {'Antivirus Details':<78} |\n{'-' * 80}\n"
+                    for av in antiviruses['list']:
+                        HudsonRock_Summary += f"| {av['name']:<60} | Count: {av['count']:<10}|\n"
+
+            # Stealer Families
+            stealer_families = data['stealerFamilies']
+            if stealer_families is None:
+                HudsonRock_Summary += f"|  stealerFamilies: || {('None'):<60}|\n"
+            else:               
+                HudsonRock_Summary += f"\n{'-' * 80}\n| {'Stealer Families':<78} |\n{'-' * 80}\n"
+                HudsonRock_Summary += f"| {'Total':<15} | {stealer_families['total']:<60}|\n"
+                for name, count in stealer_families.items():
+                    if name != 'total':
+                        HudsonRock_Summary += f"| {name:<30} | {count:<46}|\n"
+            
+            third_party = data['thirdPartyDomains']
+           
+            Write.Print(f"\n \U0001F422 Check iii", Colors.green, interval=0)
+            if not third_party:  # Check if the list is empty
+                HudsonRock_Summary += f"| Third Party Domains:|| {'None':<60}|\n"
+            else:
+                HudsonRock_Summary += f"\n{'-' * 80}\n| {'Third Party Domains':<78} |\n{'-' * 80}\n"
+                for entry in third_party:
+                    domain = entry.get('domain') or 'Unknown'
+                    occurrence = entry.get('occurrence', 0)
+                    # Ensure domain is string and occurrence is converted to string for formatting
+                    HudsonRock_Summary += f"| {'Domain':<15} | {str(domain):<50} | Occurrence: {str(occurrence):<9}|\n"
+
+        
+        Write.Print(HudsonRock_Summary, Colors.white, interval=0)
+        save_choice = save_message()
+        if save_choice == 'y':
+            save_details(HudsonRock_Summary, "HudosnRock_Domain") 
+    except requests.exceptions.Timeout:
+        #clear()
+        Write.Print("[!] > Request timed out when contacting Hudson Rock.\n", default_color, interval=0)
+    except Exception as e:
+        #clear()
+        Write.Print(f"[!] > Error: {str(e)}", default_color, interval=0)
+
+       
+    restart()
+
+def hudson_rock_username():
+
+        username = Write.Input(" \U0001F989 Enter username to check infection status: ", default_color, interval=0).strip()
+        if not username:
+            clear()
+            Write.Print(" No username provided.\n", Error_Color, interval=0)
+            restart()
+            return
+        try:
+            url = "https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-username"
+            params = {"username": username}
+            resp = requests.get(url, params=params, timeout=10)
+            resp.raise_for_status()
+            data = resp.json()
+           
+            HudsonRock_Summary = f"""
+             
+{' '*32}HudsonRock Username Summary{' '*33}|
+|{'='*78}|
+"""
+            
+            # Message section
+            HudsonRock_Summary += f"\n{'=' * 80}\n"
+            HudsonRock_Summary += f"Message: {data['message']}\n"
+            HudsonRock_Summary += f"{'=' * 80}\n\n"
+            
+            # Stealers details
+            stealers = data.get('stealers', [])
+            if not stealers:
+                HudsonRock_Summary += "Stealers: None\n"
+            else:
+                for i, stealer in enumerate(stealers, start=1):
+                    antiviruses = stealer.get('antiviruses')
+                    antivirus_str = ', '.join(antiviruses) if isinstance(antiviruses, list) else antiviruses
+                    
+                    HudsonRock_Summary += f"Stealer {i}:\n"
+                    HudsonRock_Summary += f"{'=' * 70}\n"
+                    HudsonRock_Summary += (
+                        f"  Family: {stealer.get('stealer_family', 'Unknown')}\n"
+                        f"  Computer Name: {stealer.get('computer_name', 'Unknown')}\n"
+                        f"  OS: {stealer.get('operating_system', 'Unknown')}\n"
+                        f"  Date Compromised: {stealer.get('date_compromised', 'Unknown')}\n"
+                        f"  IP Address: {stealer.get('ip', 'Unknown')}\n"
+                        f"  Malware Path: {stealer.get('malware_path', 'Unknown')}\n"
+                        f"  Antiviruses: {antivirus_str}\n"
+                        f"  Total Corporate Services: {stealer.get('total_corporate_services', 0)}\n"
+                        f"  Total User Services: {stealer.get('total_user_services', 0)}\n"
+                        f"  Top Passwords: {', '.join(stealer.get('top_passwords', []))}\n"
+                        f"  Top Logins: {', '.join(stealer.get('top_logins', []))}\n"
+                    )
+                    HudsonRock_Summary += f"{'-' * 70}\n\n"
+            
+            # Total Services
+            HudsonRock_Summary += f"{'=' * 80}\n"
+            HudsonRock_Summary += f"Total Corporate Services: {data.get('total_corporate_services', 0)}\n"
+            HudsonRock_Summary += f"Total User Services: {data.get('total_user_services', 0)}\n"
+            HudsonRock_Summary += f"{'=' * 80}\n"
+
+
+
+            Write.Print(HudsonRock_Summary, Colors.white, interval=0)
+            save_choice = save_message()
+            if save_choice == 'y':
+                save_details(HudsonRock_Summary, "HudsonRock_UserName") 
+        except requests.exceptions.Timeout:
+            #clear()
+            Write.Print("[!] > Request timed out when contacting Hudson Rock.\n", default_color, interval=0)
+        except Exception as e:
+            #clear()
+            Write.Print(f"[!] > Error: {str(e)}", default_color, interval=0)
+
+        
+        restart()
+
+def hudson_rock_ip():
+    ip_address = Write.Input(" \U0001F989 Enter IP address to check infection status: ", default_color, interval=0).strip()
+    if not ip_address:
+        clear()
+        Write.Print("\u2620 > No IP provided.\n", Error_Color, interval=0)
+        restart()
+        return
+    try:
+        url = "https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-ip"
+        params = {"ip": ip_address}
+        resp = requests.get(url, params=params, timeout=10)
+        resp.raise_for_status()
+        data = resp.json()
+        clear()
+        #Write.Print(f"\n[+] Hudson Rock IP infection check results for {ip_address}:\n", Colors.green, interval=0)
+        #Write.Print(json.dumps(data, indent=2), Colors.white, interval=0)
+
+         # Create summary table
+        hudson_summary = f"|{' '*15}HudsonRock IP Address Summary{' '*17}|"
+        
+        # Message section
+        hudson_summary += f"\n{'=' * 80}\n"
+        hudson_summary += f"IP Address: {ip_address}"
+        hudson_summary += f"\n{'-' * 80}\n"
+        hudson_summary += f"Message: {data['message']}\n"
+        hudson_summary += f"{'=' * 80}\n\n"
+        
+        # Stealers details
+        stealers = data.get('stealers', [])
+        if not stealers:
+            hudson_summary += "Stealers: None\n"
+        else:
+            for i, stealer in enumerate(stealers, start=1):
+                antivirus_list = stealer.get('antiviruses', [])
+                antivirus_str = ', '.join(antivirus_list) if antivirus_list else "None"
+                
+                hudson_summary += f"Stealer {i}:\n"
+                hudson_summary += f"{'=' * 20}\n"
+                hudson_summary += (
+                    f"  Computer Name: {stealer.get('computer_name', 'Unknown')}\n"
+                    f"  IP Address: {stealer.get('ip', 'Unknown')}\n"
+                    f"  OS: {stealer.get('operating_system', 'Unknown')}\n"
+                    f"  Date Compromised: {stealer.get('date_compromised', 'Unknown')}\n"
+                    f"  Malware Path: {stealer.get('malware_path', 'Unknown')}\n"
+                    f"  Antiviruses: {antivirus_str}\n"
+                    f"  Total Corporate Services: {stealer.get('total_corporate_services', 0)}\n"
+                    f"  Total User Services: {stealer.get('total_user_services', 0)}\n"
+                    f"  Top Passwords: {', '.join(stealer.get('top_passwords', []))}\n"
+                    f"  Top Logins: {', '.join(filter(None, stealer.get('top_logins', [])))}\n"
+                )
+                hudson_summary += f"{'-' * 20}\n\n"
+        
+        # Total Services
+        hudson_summary += f"{'=' * 80}\n"
+        hudson_summary += f"Total Corporate Services: {data.get('total_corporate_services', 0)}\n"
+        hudson_summary += f"Total User Services: {data.get('total_user_services', 0)}\n"
+        hudson_summary += f"{'=' * 80}\n"
+
+        Write.Print(hudson_summary, Colors.white, interval=0)
+
+        save_choice = save_message()
+        if save_choice == 'y':
+                save_details(hudson_summary, "HudsonRock_IP") 
+    except requests.exceptions.Timeout:
+        clear()
+        Write.Print("[!] > Request timed out when contacting Hudson Rock.\n", default_color, interval=0)
+    except Exception as e:
+        clear()
+        Write.Print(f"[!] > Error: {str(e)}", default_color, interval=0)
+    restart()
+
+
+
 def Front_Page():
 
             T = "OLA" #input("Enter Text you want to convert to ASCII art : ")
@@ -1629,6 +2079,10 @@ def main():
 ║ [16] │ DNSBL Check            │ Retrieves IPDNS blacklist info             ║
 ║ [17] │ Web Metadata Info      │ Retrieves meta tags and more from a webpage║
 ║ [18] │ File Metadata Info     │ Retrieves meta data from file path         ║
+| [19] | HR Email Search        | Retrieves infostealer email infection data (Hudson Rock)
+| [20] | HR Domain Search       | Retrieves infostealer domain infection data (Hudson Rock)
+| [21] | HR User Search         | Retrieves infostealer username infection data (Hudson Rock)
+| [22] | HR IP Search           | Retrieves infostealer IP address infection data (Hudson Rock)
 ╠══════╪════════════════════════╪════════════════════════════════════════════╣
 ║ [0]  │ Exit                   │ Exit the program                           ║
 ║ [99] │ Settings               │ Customize tool                             ║
@@ -1941,7 +2395,36 @@ def main():
                     clear()
                     Write.Print("  Enter a valid file path\n", default_color, interval=0)
                     #continue
-                read_file_metadata(file_path)    
+                read_file_metadata(file_path)   
+
+            elif choice == "19":
+                clear()
+                Write.Print(" Hudson Rock Email Check \n", Head_Color, interval=0)
+                press_zero()
+
+                hudson_rock_email()   
+
+            elif choice == "20":
+                clear()
+                Write.Print(" Hudson Rock Domain Check \n", Head_Color, interval=0)
+                press_zero()
+
+               # hudson_rock_email()     
+                hudson_rock_domain() 
+
+            elif choice == "21":
+                clear()
+                Write.Print(" Hudson Rock UserName Check \n", Head_Color, interval=0)
+                press_zero()
+             
+                hudson_rock_username() 
+
+            elif choice == "22":
+                clear()
+                Write.Print(" Hudson Rock Ip Address Check \n", Head_Color, interval=0)
+                press_zero()
+             
+                hudson_rock_ip()   
 
             elif choice == "0":
                 clear()
