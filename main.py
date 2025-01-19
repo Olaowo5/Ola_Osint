@@ -83,12 +83,13 @@ def write_settings(settings):
 def load_default_colors():
     #Load the default colors from settings.
     settings = read_settings()
-    global default_color, Head_Color, Exit_Color, Error_Color,Wait_Color
+    global default_color, Head_Color, Exit_Color, Error_Color,Wait_Color,Result_Color
     default_color = settings.get("default_color", Colors.cyan)
     Head_Color = settings.get("Head_Color", Colors.purple)
     Exit_Color = settings.get("Exit_Color", Colors.yellow)
     Error_Color = settings.get("Error_Color", Colors.red)
     Wait_Color = settings.get("Wait_Color", Colors.green)
+    Result_Color = settings.get("Result_Color", Colors.white)
 
 
 def clear():
@@ -202,8 +203,8 @@ def fetch_page_text(url, max_length=500):
 
 def test_person_search():
 
-    info_result = fetch_page_text(" https://ca.linkedin.com/in/olamide-owolabi")
-    Write.Print(info_result, Colors.white, interval=0)
+    info_result = fetch_page_text(" ")
+    Write.Print(info_result, Result_Color, interval=0)
     restart()
 
 def person_search(first_name, last_name, city):
@@ -275,7 +276,7 @@ def person_search(first_name, last_name, city):
             info_text += f"|{'='*78}|\n"
     info_text += f"╰─{' '*78}─╯"
 
-    Write.Print(info_text, Colors.white, interval=0)
+    Write.Print(info_text, Result_Color, interval=0)
 
     save_choice = save_message()
     if save_choice == 'y':
@@ -321,7 +322,7 @@ def ip_info(ip):
 │  Reverse DNS          : {ptr_record:<51} │
 ╰─────────────────────────────────────────────────────────────────────────────╯
 """
-        Write.Print(ip_detailo, Colors.white, interval=0)
+        Write.Print(ip_detailo, Result_Color, interval=0)
 
         
         save_choice = save_message()
@@ -397,7 +398,7 @@ def account_search(nickname):
         urls.append(url)
 
     search_results = fetch_social_urls(urls, " \U0001F43C Account Search")
-    Write.Print(search_results, Colors.white, interval=0)
+    Write.Print(search_results, Result_Color, interval=0)
     save_choice = save_message()
     if save_choice == 'y':
         save_details(search_results, "Account_Search")
@@ -426,7 +427,7 @@ def phone_info(phone_number):
             |  Validity || {validity:<38}|
             ╰─{' '*9}─╯╰─{' '*37}─╯\n"""
 
-        Write.Print(phonetext, Colors.white, interval=0)
+        Write.Print(phonetext, Result_Color, interval=0)
 
         save_choice = save_message()
         if save_choice == 'y':
@@ -470,7 +471,7 @@ def dns_lookup(domain):
     result_output += whois_lookup(domain)
 
     clear()
-    Write.Print(result_output, Colors.white, interval=0)
+    Write.Print(result_output, Result_Color, interval=0)
 
     save_choice = save_message()
     if save_choice == 'y':
@@ -532,7 +533,7 @@ def email_lookup(email_address):
             │  Validity:     ││ {'':<1} {validity:<57}│
             
             """
-    Write.Print(email_text, Colors.white, interval=0)
+    Write.Print(email_text, Result_Color, interval=0)
 
     #print("\n Test Phil \n")
     #email_Phlint(email_address)
@@ -607,7 +608,7 @@ def email_Phlint(emailada):
         #print(f"╰─{'─'*78}─╯")
         logresult += (f"╰─{'─'*78}─╯")
 
-        Write.Print(logresult, Colors.white, interval=0)
+        Write.Print(logresult, Result_Color, interval=0)
 
         save_choice = save_message()
         if save_choice == 'y':
@@ -678,7 +679,7 @@ def analyze_email_raw_data(raw_data):
             header_text += "| No IPs found in Received headers.\n"
 
         header_text += f"╰─{' '*78}─╯"
-        Write.Print(header_text, Colors.white, interval=0)
+        Write.Print(header_text, Result_Color, interval=0)
 
         if found_ips:
             ip_details_header = f"""
@@ -699,7 +700,7 @@ def analyze_email_raw_data(raw_data):
                     ip_details_summary += "|"+ "-"*78 + "|\n"
             ip_details_footer = f"| {' '*78} |"
 
-            Write.Print(ip_details_header + ip_details_summary + ip_details_footer, Colors.white, interval=0)
+            Write.Print(ip_details_header + ip_details_summary + ip_details_footer, Result_Color, interval=0)
 
         # SPF, DKIM, DMARC checks
         spf_result, dkim_result, dmarc_result = None, None, None
@@ -738,7 +739,7 @@ def analyze_email_raw_data(raw_data):
 |  DMARC Result:  {dmarc_result if dmarc_result else 'Not found':<20}|
 
 """
-        Write.Print(alignment_text, Colors.white, interval=0)
+        Write.Print(alignment_text, Result_Color, interval=0)
         save_choice = save_message()
         Total_String = header_text + "\n"+ ip_details_header + "\n" +  ip_details_summary + "\n"+ ip_details_footer  + "\n" + alignment_text
         if save_choice == 'y':
@@ -802,7 +803,7 @@ def haveibeenpwned_check(email):
                 results_text += separator
 
             results_text += f"\n END OF BREACHES\n"
-            Write.Print(results_text, Colors.white, interval=0)
+            Write.Print(results_text, Result_Color, interval=0)
 
             
             save_choice = save_message()
@@ -818,7 +819,7 @@ def haveibeenpwned_check(email):
 |  \U0001F43C Good news! No breaches found for: {email:<48}|
 
 """
-            Write.Print(msg, Colors.white, interval=0)
+            Write.Print(msg, Result_Color, interval=0)
 
             save_choice = save_message()
             if save_choice == 'y':
@@ -868,7 +869,7 @@ def change_color(color_name):
 | [0]  || Back to settings menu |
 ╰─    ─╯╰─                     ─╯
 """
-    Write.Print(color_menu, Colors.white, interval=0)
+    Write.Print(color_menu, Result_Color, interval=0)
 
     color_choice = Write.Input("\n\n \U0001F989 > Enter Color to PIck or 0 to cancel: ", default_color, interval=0).strip()
 
@@ -1211,7 +1212,7 @@ def reverse_phone_lookup(phone_number):
 ╭─{' '*78}─╮
 |{' '*28}Reverse Phone Lookup{' '*28}|
 |{'='*80}|
-| [+] > Phone: {phone_number:<66}|
+|    Phone: {phone_number:<66}|
 |{'-'*80}|
 """
     for idx, link, content in results_data:
@@ -1226,7 +1227,7 @@ def reverse_phone_lookup(phone_number):
         if idx != results_data[-1][0]:
             info_text += f"|{'='*78}|\n"
     info_text += f"╰─{' '*78}─╯"
-    Write.Print(info_text, Colors.white, interval=0)
+    Write.Print(info_text, Result_Color, interval=0)
     restart()
 
 
@@ -1262,7 +1263,7 @@ def check_ssl_cert(domain):
 |  Valid Until:  ||  {str(not_after_dt):<58}|
 
 """
-        Write.Print(info_text, Colors.white, interval=0)
+        Write.Print(info_text, Result_Color, interval=0)
         save_choice = save_message()
         if save_choice == 'y':
             save_details(info_text, "SSL_Certificate")
@@ -1320,7 +1321,7 @@ def check_robots_and_sitemap(domain):
             result_text += f"|{'='*80}|\n"
 
     
-    Write.Print(result_text, Colors.white, interval=0)
+    Write.Print(result_text, Result_Color, interval=0)
     save_choice = save_message()
     if save_choice == 'y':
             save_details(result_text, "Sitemap_RobotsTxt")
@@ -1370,7 +1371,7 @@ def check_dnsbl(ip_address):
         report += "| The IP is NOT listed on the tested DNSBL(s).\n"
 
     clear()
-    Write.Print(report, Colors.white, interval=0)
+    Write.Print(report, Result_Color, interval=0)
     save_choice = save_message()
     if save_choice == 'y':
             save_details(report, "DNSBL_Check")
@@ -1407,12 +1408,12 @@ def fetch_webpage_metadata(url):
 |  Keywords:    || {keywords:<58}|
 
 """
-        Write.Print(result_text, Colors.white, interval=0)
+        Write.Print(result_text, Result_Color, interval=0)
         save_choice = save_message()
         if save_choice == 'y':
             save_details(result_text, "Web_Metadata")
     except Exception as e:
-        Write.Print(f" Error fetching metadata: {str(e)}\n", Colors.red, interval=0)
+        Write.Print(f" Error fetching metadata: {str(e)}\n", Error_Color, interval=0)
 
     restart()
 
@@ -1744,7 +1745,7 @@ def read_file_metadata(file_path):
 
         metadata_summary += "\n" + "="*78 + "\n"
        
-        Write.Print(metadata_summary, Colors.white, interval=0)
+        Write.Print(metadata_summary, Result_Color, interval=0)
 
         
         save_choice = save_message()
@@ -1837,7 +1838,7 @@ def hudson_rock_email():
 
 
 
-        Write.Print(HudsonRock_Summary, Colors.white, interval=0)
+        Write.Print(HudsonRock_Summary, Result_Color, interval=0)
         save_choice = save_message()
         if save_choice == 'y':
             save_details(HudsonRock_Summary, "HudosnRock_Email") 
@@ -2046,7 +2047,7 @@ def hudson_rock_domain():
                     HudsonRock_Summary += f"| {'Domain':<15} | {str(domain):<50} | Occurrence: {str(occurrence):<9}|\n"
 
         
-        Write.Print(HudsonRock_Summary, Colors.white, interval=0)
+        Write.Print(HudsonRock_Summary, Result_Color, interval=0)
         save_choice = save_message()
         if save_choice == 'y':
             save_details(HudsonRock_Summary, "HudosnRock_Domain") 
@@ -2122,7 +2123,7 @@ def hudson_rock_username():
 
 
 
-            Write.Print(HudsonRock_Summary, Colors.white, interval=0)
+            Write.Print(HudsonRock_Summary, Result_Color, interval=0)
             save_choice = save_message()
             if save_choice == 'y':
                 save_details(HudsonRock_Summary, "HudsonRock_UserName") 
@@ -2195,7 +2196,7 @@ def hudson_rock_ip():
         hudson_summary += f"Total User Services: {data.get('total_user_services', 0)}\n"
         hudson_summary += f"{'=' * 80}\n"
 
-        Write.Print(hudson_summary, Colors.white, interval=0)
+        Write.Print(hudson_summary, Result_Color, interval=0)
 
         save_choice = save_message()
         if save_choice == 'y':
@@ -2210,8 +2211,8 @@ def hudson_rock_ip():
 
 def Front_Page():
 
-            T = "OLA" #input("Enter Text you want to convert to ASCII art : ")
-            P = "MIDE"
+            T = "OLA" 
+            P = "Osint"
             ASCII_art_1 = pyfiglet.figlet_format(T, font='isometric1')
             colored_ASCII_art_1 = colored(ASCII_art_1, 'green')  # Change 'cyan' to any color you prefer
             ASCII_art_2 = pyfiglet.figlet_format(P, font='isometric1')
@@ -2221,8 +2222,8 @@ def Front_Page():
             #print("\n")
             print(colored_ASCII_art_2)
                   
-            author = "🛡️ By Olamide Owolabi - Hello World! 🛡️"
-            Write.Print(author + "\n[C.I.T]\n OSint Info Tool\n", Colors.white, interval=0)
+            author = f" \u0398 By Olamide Owolabi "
+            Write.Print(author + "\n OSint Tool\n", Result_Color, interval=0)
 
 
 
@@ -2236,34 +2237,34 @@ def main():
             
            
             menu = """
-╔═══════════════════════════════════════════════════════════════════════════════════════╗
-║  №   │      Function          │ Description                                           ║
-╠══════╪════════════════════════╪═══════════════════════════════════════════════════════╣
-║ [1]  │ IP Address Search      │ Retrieves IP address info                             ║
-║ [2]  │ Account Search         │ Retrieves profiles from various websites              ║
-║ [3]  │ Phone Search           │ Retrieves phone number info                           ║
-║ [4]  │ DNS Search             │ Retrieves DNS records (A, CNAME, MX, NS)              ║
-║ [5]  │ Email Search           │ Retrieves MX info for an email                        ║
-║ [6]  │ Email Search Accounts  │ Retrieves MX info for an email                        ║
-║ [7]  │ Person Name Search     │ Retrieves extensive person-related data               ║
-║ [8]  │ Email Header Search    │ Retrieves info from an email header                   ║
-║ [9]  │ Email Breach Search    │ Retrieves email data breach info (HIBP)               ║
-║ [11] │ Password Analyzer      │ Retrieves password strength rating                    ║
-║ [12] │ Username Search        │ Retrieves usernames from online accounts              ║
-║ [13] │ Reverse Phone Search   │ Retrieves references to a phone number                ║
-║ [14] │ SSL Cert Search        │ Retrieves basic SSL certificate details               ║
-║ [15] │ Robots.txt/Sitemap     │ Retrieves robots.txt & sitemap.xml info               ║
-║ [16] │ DNSBL Check            │ Retrieves IPDNS blacklist info                        ║
-║ [17] │ Web Metadata Info      │ Retrieves meta tags and more from a webpage           ║
-║ [18] │ File Metadata Info     │ Retrieves meta data from file path                    ║
-| [19] | HR Email Search        | Retrieves infostealer email infection data (Hudson Rock)
-| [20] | HR Domain Search       | Retrieves infostealer domain infection data (Hudson Rock)
-| [21] | HR User Search         | Retrieves infostealer username infection data (Hudson Rock)
-| [22] | HR IP Search           | Retrieves infostealer IP address infection data (Hudson Rock)
-╠══════╪════════════════════════╪═══════════════════════════════════════════════════════╣
-║ [0]  │ Exit                   │ Exit the program                                      ║
-║ [99] │ Settings               │ Customize tool                                        ║
-╚═══════════════════════════════════════════════════════════════════════════════════════╝
+╔═════════════════════════════════════════════════════════════════════════════════════════╗
+║  №   │      Function          │ Description                                             ║
+╠══════╪════════════════════════╪═════════════════════════════════════════════════════════╣
+║ [1]  │ IP Address Search      │ Gathers IP address info                                 ║
+║ [2]  │ Account Search         │ Gathers profiles from various websites                  ║
+║ [3]  │ Phone Search           │ Gathers phone number info                               ║
+║ [4]  │ DNS Search             │ Gathers DNS records, whois info                         ║
+║ [5]  │ Email Search           │ Gathers MX info for an email                            ║
+║ [6]  │ Email Search Accounts  │ Gathers Accounts where the email is registered          ║
+║ [7]  │ Person Name Search     │ Gathers Person related info based on Google Search      ║
+║ [8]  │ Email Raw Data Search  │ Gathers info from an email raw data                     ║
+║ [9]  │ Email Breach Search    │ Gathers email data breach info (HIBP)                   ║
+║ [11] │ Password Analyzer      │ Analyzes password strength and checks for data breaches ║
+║ [12] │ Username Search        │ Gathers accounts that utilizes Username                 ║
+║ [13] │ Reverse Phone Search   │ Gathers references to a phone number using Google Search║
+║ [14] │ SSL Cert Search        │ Gathers basic SSL certificate details                   ║
+║ [15] │ Robots.txt/Sitemap     │ Gathers robots.txt & sitemap.xml info                   ║
+║ [16] │ DNSBL Check            │ Gathers IPDNS blacklist info                            ║
+║ [17] │ Web Metadata Info      │ Gathers meta tags and more from a webpage               ║
+║ [18] │ File Metadata Info     │ Gathers meta data from local file path                  ║
+| [19] | HR Email Search        │ Gathers infostealer email infection data (Hudson Rock)  ║
+| [20] | HR Domain Search       │ Gathers infostealer domain infection data (Hudson Rock) ║
+| [21] | HR User Search         │ Gathers infostealer username infection data (Hudson Rock)║
+| [22] | HR IP Search           │ Gathers infostealer IP address infection data (Hudson Rock)║
+╠══════╪════════════════════════╪═════════════════════════════════════════════════════════╣
+║ [0]  │ Exit                   │ Exit the program                                        ║
+║ [99] │ Settings               │ Customize tool                                          ║
+╚═════════════════════════════════════════════════════════════════════════════════════════╝
 """
             Write.Print(menu, Colors.white, interval=0)
 
@@ -2406,7 +2407,7 @@ def main():
 
             elif choice == "8":
                 clear()
-                Write.Print(" Email Header Search \n", Head_Color, interval=0)
+                Write.Print(" Email Raw Data Search \n", Head_Color, interval=0)
 
                 press_zero()
                 
@@ -2616,7 +2617,7 @@ def main():
 
         except KeyboardInterrupt:
             clear()
-            Write.Print(" \u26A0 Exiting on user request...\n", Error_Color, interval=0)
+            Write.Print(" \u26A0 Exiting on user request...\n", Exit_Color, interval=0)
             exit()
 
 def settings():
@@ -2625,7 +2626,7 @@ def settings():
             clear()
             Front_Page()
 
-            settings_menu = """╭─    ─╮╭─                   ─╮╭─                                         ─╮
+            settings_menu = """                                ─
 |  №   ||       Setting       ||                Description                |
 |======||=====================||===========================================|
 | [1]  || Change default      || Customize the default theme color         |
@@ -2633,12 +2634,13 @@ def settings():
 | [3]  || Change exit         || Customize the Exit message color          |
 | [4]  || Change Error        || Customize the Error message color         |
 | [5]  || Change Wait         || Customize the Wait message color          |
-|------||---------------------||-------------------------------------------
-| [0]  || Back to menu        || Exit the settings
-╰─    ─╯╰─                   ─╯╰─                                         ─╯
+| [6]  || Change Result       || Customize the color of the outputs        |
+|------||---------------------||-------------------------------------------|
+| [0]  || Back to menu        || Exit the settings                         |
+
 
 """
-            Write.Print(settings_menu, Colors.white, interval=0)
+            Write.Print(settings_menu, Result_Color, interval=0)
 
             settings_choice = Write.Input("[?] >  ", default_color, interval=0).strip()
 
@@ -2652,6 +2654,8 @@ def settings():
                 change_color("Error_Color")
             elif settings_choice == "5":
                 change_color("Wait_Color")
+            elif settings_choice == "6":
+                change_color("Result_Color")    
             elif settings_choice == "0":
                 return
             else:
