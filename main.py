@@ -55,10 +55,11 @@ import importlib
 
 
 
-default_color = Colors.cyan
-Head_Color = Colors.purple
-Exit_Color = Colors.yellow
-Error_Color = Colors.red
+#default_color = Colors.cyan
+#Head_Color = Colors.purple
+#Exit_Color = Colors.yellow
+#Error_Color = Colors.red
+#Wait_Color = Colors.green
 
 API_KEY = "AIzaSyAondv81wJMIhlMnUzmhsPJcw70CYsHAPM" #"ENTER GOOGLE CUSTOM SEARCH API KEY HERE"
 CX = "509f2c6d7178d43ea"  #"ENTER GOOGLE CUSTOM SEARCH CX HERE"
@@ -79,6 +80,16 @@ def write_settings(settings):
     with open('Settings/Colorcode.json', 'w') as file:
         json.dump(settings, file)
 
+def load_default_colors():
+    #Load the default colors from settings.
+    settings = read_settings()
+    global default_color, Head_Color, Exit_Color, Error_Color,Wait_Color
+    default_color = settings.get("default_color", Colors.cyan)
+    Head_Color = settings.get("Head_Color", Colors.purple)
+    Exit_Color = settings.get("Exit_Color", Colors.yellow)
+    Error_Color = settings.get("Error_Color", Colors.red)
+    Wait_Color = settings.get("Wait_Color", Colors.green)
+
 
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
@@ -86,10 +97,10 @@ def clear():
 def waitmsg(msg):
     
     if(msg == ""):
-        Write.Print("\n \U0001F422  Please wait while we process your request...\n", Colors.green, interval=0)
+        Write.Print("\n \U0001F422  Please wait while we process your request...\n", Wait_Color, interval=0)
     else:
         clear()
-        Write.Print(f"\n \U0001F422  {msg}\n", Colors.green, interval=0)
+        Write.Print(f"\n \U0001F422  {msg}\n", Wait_Color, interval=0)
 
 def press_zero():
      Write.Print("\n \u26A0  Press 0 and enter to cancel \n", Exit_Color, interval=0)
@@ -148,10 +159,10 @@ def save_details(data,NameData):
         with open(filename, "w", encoding="utf-8") as file:
             file.write(data)
 
-        Write.Print(f"\n \U0001F989 {NameData} details saved to {filename}\n", Colors.green, interval=0)
+        Write.Print(f"\n \U0001F989 {NameData} details saved to {filename}\n", Wait_Color, interval=0)
     except Exception as e:
         #clear()
-        Write.Print(f"\n \u2620 Error Saving {NameData} to file", default_color, interval=0)
+        Write.Print(f"\n \u2620 Error Saving {NameData} to file", Exit_Color, interval=0)
 
 def get_ip_details(ip):
     try:
@@ -319,7 +330,7 @@ def ip_info(ip):
 
     except Exception as e:
         #clear()
-        Write.Print(f"\n \u2620 Error retrieving IP address info. {str(e)}", default_color, interval=0)
+        Write.Print(f"\n \u2620 Error retrieving IP address info. {str(e)}", Error_Color, interval=0)
 
     restart()
 
@@ -487,7 +498,7 @@ def email_lookup(email_address):
         v = validate_email(email_address)
         email_domain = v.domain
     except EmailNotValidError as e:
-        Write.Print(f"[!] > Invalid email format: {str(e)}", default_color, interval=0)
+        Write.Print(f" Invalid email format: {str(e)}", Error_Color, interval=0)
         restart()
         return
 
@@ -759,7 +770,7 @@ def haveibeenpwned_check(email):
 ╭─{' '*78}─╮
 |{' '*30}Have I Been Pwned?{' '*30}|
 |{'='*80}|
-| [!] > Bad news! Your email was found in {len(breaches)} breach(es)                          |
+|  Bad news! Your email was found in {len(breaches)} breach(es)                          |
 |{'-'*80}|
 """
             max_width = 70  # Define a constant width for the content
@@ -823,54 +834,79 @@ Response: {resp.text}
 
     except requests.exceptions.Timeout:
         clear()
-        Write.Print("\u2620 Request timed out when contacting Have I Been Pwned.", default_color, interval=0)
+        Write.Print("\u2620 Request timed out when contacting Have I Been Pwned.", Error_Color, interval=0)
     except Exception as e:
         clear()
-        Write.Print(f"\u2620 An error occurred: {str(e)}", default_color, interval=0)
+        Write.Print(f"\u2620 An error occurred: {str(e)}", Error_Color, interval=0)
 
     restart()
 
 
-def change_color():
-    global default_color
-    clear()
+def change_color(color_name):
+    #clear()
     color_menu = """
 ╭─    ─╮╭─                     ─╮
 |  №   ||         Color         |
 |======||=======================|
-| [1]  || Red                   |
-| [2]  || Blue                  |
-| [3]  || Green                 |
+| [1]  || Cyan                  |
+| [2]  || Purple                |
+| [3]  || Red                   |
 | [4]  || Yellow                |
-| [5]  || Cyan                  |
+| [5]  || Blue                  |
 | [6]  || White                 |
+| [7]  || Black                 |
+| [8]  || Green                 |
+| [9]  || Gray                  |
+| [10] || Light Red             |
+| [11] || Light Green           |
+| [12] || Orange                |
+| [13] || Light Blue            |
+| [14] || turquoise             |
+| [15] || Pink                  |
+| [16] || Dark Red              |
 |------||-----------------------|
 | [0]  || Back to settings menu |
 ╰─    ─╯╰─                     ─╯
 """
     Write.Print(color_menu, Colors.white, interval=0)
 
-    color_choice = Write.Input("\n\n[?] >  ", default_color, interval=0).strip()
+    color_choice = Write.Input("\n\n \U0001F989 > Enter Color to PIck or 0 to cancel: ", default_color, interval=0).strip()
 
-    color = {
-        "1": Colors.red,
-        "2": Colors.blue,
-        "3": Colors.green,
-        "4": Colors.yellow,
-        "5": Colors.cyan,
-        "6": Colors.white
-    }
+    color_map = {
+    "1": Colors.cyan,
+    "2": Colors.purple,
+    "3": Colors.red,
+    "4": Colors.yellow,
+    "5": Colors.blue,
+    "6": Colors.white,
+    "7": Colors.black,
+    "8": Colors.green,
+    "9": Colors.gray,
+    "10": Colors.light_red,
+    "11": Colors.light_green,
+    "12": Colors.orange,
+    "13": Colors.light_blue,
+    "14": Colors.turquoise,
+    "15": Colors.pink,
+    "16": Colors.dark_red
+}
 
-    if color_choice in color:
-        default_color = color[color_choice]
+    if color_choice in color_map:
+        new_color = color_map[color_choice]
+        globals()[color_name] = new_color  # Update the global color variable
+        settings = read_settings()
+        settings[color_name] = new_color
+        write_settings(settings)
         clear()
-        Write.Print("[!] > Colour has been changed.\n", default_color, interval=0)
+        Write.Print(f"\U0001F98B {color_name.replace('_', ' ').title()} has been changed.\n", new_color, interval=0)
     elif color_choice == "0":
-        settings()
+        return
     else:
         clear()
-        Write.Print("[!] > Invalid choice.\n", Colors.red, interval=0)
-    restart()
+        Write.Print("\u2620 Invalid choice.\n", Error_Color, interval=0)
+
+    restart()  
+
 
 def whois_lookup(domain):
     who_summary = ""
@@ -999,7 +1035,7 @@ def check_password(password=None):
     waitmsg("Checking password strength...") 
     if not password:
         clear()
-        Write.Print(" Password cannot be empty Please enter the password.\n", default_color, interval=0)
+        Write.Print(" Password cannot be empty Please enter the password.\n", Exit_Color, interval=0)
         restart()
         return
 
@@ -1127,7 +1163,7 @@ def username_check(username=None):
             save_choice = save_message()
             if save_choice == 'y':
                 generate_html_report(username, found_sites)
-                Write.Print(f"\n \U0001F427 > Report saved: username_check_report_{username}.html\n", default_color, interval=0)
+                Write.Print(f"\n \U0001F427 > Report saved: username_check_report_{username}.html\n", Exit_Color, interval=0)
         else:
             Write.Print(f"\n \U0001F427 > No results found for {username}.\n", Exit_Color, interval=0)
 
@@ -1232,11 +1268,11 @@ def check_ssl_cert(domain):
             save_details(info_text, "SSL_Certificate")
 
     except ssl.SSLError as e:
-        Write.Print(f"[!] > SSL Error: {str(e)}\n", Colors.red, interval=0)
+        Write.Print(f" SSL Error: {str(e)}\n", Colors.red, interval=0)
     except socket.timeout:
-        Write.Print("[!] > Connection timed out.\n", Colors.red, interval=0)
+        Write.Print(" Connection timed out.\n", Colors.red, interval=0)
     except Exception as e:
-        Write.Print(f"[!] > An error occurred retrieving SSL cert info: {str(e)}\n", Colors.red, interval=0)
+        Write.Print(f" An error occurred retrieving SSL cert info: {str(e)}\n", Colors.red, interval=0)
 
     restart()
 
@@ -1376,7 +1412,7 @@ def fetch_webpage_metadata(url):
         if save_choice == 'y':
             save_details(result_text, "Web_Metadata")
     except Exception as e:
-        Write.Print(f"[!] > Error fetching metadata: {str(e)}\n", Colors.red, interval=0)
+        Write.Print(f" Error fetching metadata: {str(e)}\n", Colors.red, interval=0)
 
     restart()
 
@@ -1730,7 +1766,7 @@ def hudson_rock_email():
     try:
         v = validate_email(emaila)
         emailrs = v.email
-        Write.Print(f" Valid email: {emailrs}", Colors.green, interval=0)
+        Write.Print(f" Valid email: {emailrs}", Wait_Color, interval=0)
     except EmailNotValidError as e:
         Write.Print(f" Invalid email format: {str(e)}", Error_Color, interval=0)
         restart()
@@ -1742,7 +1778,7 @@ def hudson_rock_email():
         resp.raise_for_status()
         data = resp.json()
         #clear()
-        Write.Print(f"\n\U0001F43C Hudson Rock email infection check results for {emaila}:\n", Colors.green, interval=0)
+        Write.Print(f"\n\U0001F43C Hudson Rock email infection check results for {emaila}:\n", Wait_Color, interval=0)
         #Write.Print(json.dumps(data, indent=2), Colors.white, interval=0)
 
 
@@ -1807,10 +1843,10 @@ def hudson_rock_email():
             save_details(HudsonRock_Summary, "HudosnRock_Email") 
     except requests.exceptions.Timeout:
         #clear()
-        Write.Print("[!] > Request timed out when contacting Hudson Rock.\n", default_color, interval=0)
+        Write.Print(" Request timed out when contacting Hudson Rock.\n", Error_Color, interval=0)
     except Exception as e:
         #clear()
-        Write.Print(f"[!] > Error: {str(e)}", default_color, interval=0)
+        Write.Print(f" Error: {str(e)}", Error_Color, interval=0)
 
        
     restart()
@@ -1831,10 +1867,10 @@ def hudson_rock_domain():
         resp.raise_for_status()
         data = resp.json()
         #clear()
-        Write.Print(f"\n \U0001F43C Hudson Rock domain infection check results for {domainola}:\n", Colors.green, interval=0)
+        Write.Print(f"\n \U0001F43C Hudson Rock domain infection check results for {domainola}:\n", Wait_Color, interval=0)
         #Write.Print(json.dumps(data, indent=2), Colors.white, interval=0)
 
-        Write.Print(f"\n \U0001F422 Checking Domain {domainola}:\n", Colors.green, interval=0)
+        #Write.Print(f"\n \U0001F422 Checking Domain {domainola}:\n", Colors.green, interval=0)
 
 
         #messageData = data['message']
@@ -1850,7 +1886,7 @@ def hudson_rock_domain():
 |{'-'*78}|
 """
 
-        Write.Print(f"\n \U0001F422 Check ii", Colors.green, interval=0)
+        #Write.Print(f"\n \U0001F422 Check ii", Colors.green, interval=0)
         dataii = data.get('data', [])
         
         # Check if the stealers list is empty
@@ -1998,7 +2034,7 @@ def hudson_rock_domain():
             
             third_party = data['thirdPartyDomains']
            
-            Write.Print(f"\n \U0001F422 Check iii", Colors.green, interval=0)
+            #Write.Print(f"\n \U0001F422 Check iii", Colors.green, interval=0)
             if not third_party:  # Check if the list is empty
                 HudsonRock_Summary += f"| Third Party Domains:|| {'None':<60}|\n"
             else:
@@ -2016,10 +2052,10 @@ def hudson_rock_domain():
             save_details(HudsonRock_Summary, "HudosnRock_Domain") 
     except requests.exceptions.Timeout:
         #clear()
-        Write.Print("[!] > Request timed out when contacting Hudson Rock.\n", default_color, interval=0)
+        Write.Print(" Request timed out when contacting Hudson Rock.\n", Error_Color, interval=0)
     except Exception as e:
         #clear()
-        Write.Print(f"[!] > Error: {str(e)}", default_color, interval=0)
+        Write.Print(f" Error: {str(e)}", Error_Color, interval=0)
 
        
     restart()
@@ -2092,10 +2128,10 @@ def hudson_rock_username():
                 save_details(HudsonRock_Summary, "HudsonRock_UserName") 
         except requests.exceptions.Timeout:
             #clear()
-            Write.Print("[!] > Request timed out when contacting Hudson Rock.\n", default_color, interval=0)
+            Write.Print(" Request timed out when contacting Hudson Rock.\n", Error_Color, interval=0)
         except Exception as e:
             #clear()
-            Write.Print(f"[!] > Error: {str(e)}", default_color, interval=0)
+            Write.Print(f" Error: {str(e)}", Error_Color, interval=0)
 
         
         restart()
@@ -2166,10 +2202,10 @@ def hudson_rock_ip():
                 save_details(hudson_summary, "HudsonRock_IP") 
     except requests.exceptions.Timeout:
         clear()
-        Write.Print("[!] > Request timed out when contacting Hudson Rock.\n", default_color, interval=0)
+        Write.Print(" Request timed out when contacting Hudson Rock.\n", default_color, interval=0)
     except Exception as e:
         clear()
-        Write.Print(f"[!] > Error: {str(e)}", default_color, interval=0)
+        Write.Print(f" Error: {str(e)}", Error_Color, interval=0)
     restart()
 
 def Front_Page():
@@ -2195,38 +2231,39 @@ def main():
         try:
             clear()
 
+            load_default_colors()
             Front_Page()
             
            
             menu = """
-╔════════════════════════════════════════════════════════════════════════════╗
-║  №   │      Function          │ Description                                ║
-╠══════╪════════════════════════╪════════════════════════════════════════════╣
-║ [1]  │ IP Address Search      │ Retrieves IP address info                  ║
-║ [2]  │ Account Search         │ Retrieves profiles from various websites   ║
-║ [3]  │ Phone Search           │ Retrieves phone number info                ║
-║ [4]  │ DNS Search             │ Retrieves DNS records (A, CNAME, MX, NS)   ║
-║ [5]  │ Email Search           │ Retrieves MX info for an email             ║
-║ [6]  │ Email Search Accounts  │ Retrieves MX info for an email             ║
-║ [7]  │ Person Name Search     │ Retrieves extensive person-related data    ║
-║ [8]  │ Email Header Search    │ Retrieves info from an email header        ║
-║ [9]  │ Email Breach Search    │ Retrieves email data breach info (HIBP)    ║
-║ [11] │ Password Analyzer      │ Retrieves password strength rating         ║
-║ [12] │ Username Search        │ Retrieves usernames from online accounts   ║
-║ [13] │ Reverse Phone Search   │ Retrieves references to a phone number     ║
-║ [14] │ SSL Cert Search        │ Retrieves basic SSL certificate details    ║
-║ [15] │ Robots.txt/Sitemap     │ Retrieves robots.txt & sitemap.xml info    ║
-║ [16] │ DNSBL Check            │ Retrieves IPDNS blacklist info             ║
-║ [17] │ Web Metadata Info      │ Retrieves meta tags and more from a webpage║
-║ [18] │ File Metadata Info     │ Retrieves meta data from file path         ║
+╔═══════════════════════════════════════════════════════════════════════════════════════╗
+║  №   │      Function          │ Description                                           ║
+╠══════╪════════════════════════╪═══════════════════════════════════════════════════════╣
+║ [1]  │ IP Address Search      │ Retrieves IP address info                             ║
+║ [2]  │ Account Search         │ Retrieves profiles from various websites              ║
+║ [3]  │ Phone Search           │ Retrieves phone number info                           ║
+║ [4]  │ DNS Search             │ Retrieves DNS records (A, CNAME, MX, NS)              ║
+║ [5]  │ Email Search           │ Retrieves MX info for an email                        ║
+║ [6]  │ Email Search Accounts  │ Retrieves MX info for an email                        ║
+║ [7]  │ Person Name Search     │ Retrieves extensive person-related data               ║
+║ [8]  │ Email Header Search    │ Retrieves info from an email header                   ║
+║ [9]  │ Email Breach Search    │ Retrieves email data breach info (HIBP)               ║
+║ [11] │ Password Analyzer      │ Retrieves password strength rating                    ║
+║ [12] │ Username Search        │ Retrieves usernames from online accounts              ║
+║ [13] │ Reverse Phone Search   │ Retrieves references to a phone number                ║
+║ [14] │ SSL Cert Search        │ Retrieves basic SSL certificate details               ║
+║ [15] │ Robots.txt/Sitemap     │ Retrieves robots.txt & sitemap.xml info               ║
+║ [16] │ DNSBL Check            │ Retrieves IPDNS blacklist info                        ║
+║ [17] │ Web Metadata Info      │ Retrieves meta tags and more from a webpage           ║
+║ [18] │ File Metadata Info     │ Retrieves meta data from file path                    ║
 | [19] | HR Email Search        | Retrieves infostealer email infection data (Hudson Rock)
 | [20] | HR Domain Search       | Retrieves infostealer domain infection data (Hudson Rock)
 | [21] | HR User Search         | Retrieves infostealer username infection data (Hudson Rock)
 | [22] | HR IP Search           | Retrieves infostealer IP address infection data (Hudson Rock)
-╠══════╪════════════════════════╪════════════════════════════════════════════╣
-║ [0]  │ Exit                   │ Exit the program                           ║
-║ [99] │ Settings               │ Customize tool                             ║
-╚════════════════════════════════════════════════════════════════════════════╝
+╠══════╪════════════════════════╪═══════════════════════════════════════════════════════╣
+║ [0]  │ Exit                   │ Exit the program                                      ║
+║ [99] │ Settings               │ Customize tool                                        ║
+╚═══════════════════════════════════════════════════════════════════════════════════════╝
 """
             Write.Print(menu, Colors.white, interval=0)
 
@@ -2283,7 +2320,7 @@ def main():
 
                 if not phone_number:
                     clear()
-                    Write.Print("[!] > Enter phone number\n", default_color, interval=0)
+                    Write.Print(" Enter phone number\n", default_color, interval=0)
                     continue
                 phone_info(phone_number)
 
@@ -2300,7 +2337,7 @@ def main():
 
                 if not domain:
                     clear()
-                    Write.Print("[!] > Enter domain\n", default_color, interval=0)
+                    Write.Print(" Enter domain\n", default_color, interval=0)
                     continue
                 Write.Print(" \U0001F422 Retrieving DNS records...\n", default_color, interval=0)
                 dns_lookup(domain)
@@ -2319,7 +2356,7 @@ def main():
 
                 if not email:
                     clear()
-                    Write.Print("[!] > Enter email\n", default_color, interval=0)
+                    Write.Print(" Enter email\n", default_color, interval=0)
                     continue
                 email_lookup(email)
 
@@ -2337,7 +2374,7 @@ def main():
 
                 if not email:
                     clear()
-                    Write.Print("[!] > Enter email\n", default_color, interval=0)
+                    Write.Print(" Enter email\n", default_color, interval=0)
                     continue
                 email_Phlint(email)    
 
@@ -2360,9 +2397,9 @@ def main():
 
                 if not first_name or not last_name:
                     clear()
-                    Write.Print("[!] > Enter first and last name\n", default_color, interval=0)
+                    Write.Print(" Enter first and last name\n", default_color, interval=0)
                     continue
-                Write.Print("[!] > Searching the given name and location...\n", default_color, interval=0)
+                Write.Print(" Searching the given name and location...\n", default_color, interval=0)
                 #test_person_search()
                 person_search(first_name, last_name, city)
 
@@ -2382,7 +2419,7 @@ def main():
                         zero_pressed()  # Call the zeroPress function when input is canceled
                         continue
                     if not email_data.strip():
-                        print("[!] > No email data provided.\n")
+                        print(" No email data provided.\n")
                         continue
 
                     try:
@@ -2403,7 +2440,7 @@ def main():
                      continue
                 if not email:
                     clear()
-                    Write.Print("[!] > Enter email\n", default_color, interval=0)
+                    Write.Print(" Enter email\n", default_color, interval=0)
                     continue
                 haveibeenpwned_check(email)
      
@@ -2443,7 +2480,7 @@ def main():
                 
                 if not phone_number:
                     clear()
-                    Write.Print("[!] > Enter phone number\n", default_color, interval=0)
+                    Write.Print(" Enter phone number\n", default_color, interval=0)
                     continue
                 reverse_phone_lookup(phone_number)
 
@@ -2464,7 +2501,7 @@ def main():
 
                 if not domain:
                     clear()
-                    Write.Print("[!] > Enter a domain\n", default_color, interval=0)
+                    Write.Print(" Enter a domain\n", default_color, interval=0)
                     continue
                 check_ssl_cert(domain)
 
@@ -2481,7 +2518,7 @@ def main():
                 
                 if not domain:
                     clear()
-                    Write.Print("[!] > Enter a domain\n", default_color, interval=0)
+                    Write.Print(" Enter a domain\n", default_color, interval=0)
                     continue
                 check_robots_and_sitemap(domain)
 
@@ -2498,7 +2535,7 @@ def main():
 
                 if not ip_address:
                     clear()
-                    Write.Print("[!] > Enter an IP address\n", default_color, interval=0)
+                    Write.Print(" Enter an IP address\n", default_color, interval=0)
                     continue
                 check_dnsbl(ip_address)
 
@@ -2567,7 +2604,7 @@ def main():
 
             elif choice == "0":
                 clear()
-                Write.Print("\n \U0001F6AA Exiting...", default_color, interval=0)
+                Write.Print("\n \U0001F6AA Exiting...", Exit_Color, interval=0)
                 exit()
 
             elif choice == "99":
@@ -2591,26 +2628,39 @@ def settings():
             settings_menu = """╭─    ─╮╭─                   ─╮╭─                                         ─╮
 |  №   ||       Setting       ||                Description                |
 |======||=====================||===========================================|
-| [1]  || Theme change        || Customize the theme
+| [1]  || Change default      || Customize the default theme color         |
+| [2]  || Change header       || Customize the Header color                |
+| [3]  || Change exit         || Customize the Exit message color          |
+| [4]  || Change Error        || Customize the Error message color         |
+| [5]  || Change Wait         || Customize the Wait message color          |
 |------||---------------------||-------------------------------------------
 | [0]  || Back to menu        || Exit the settings
 ╰─    ─╯╰─                   ─╯╰─                                         ─╯
+
 """
             Write.Print(settings_menu, Colors.white, interval=0)
 
             settings_choice = Write.Input("[?] >  ", default_color, interval=0).strip()
 
             if settings_choice == "1":
-                change_color()
+                change_color("default_color")
+            elif settings_choice == "2":
+                change_color("Head_Color")
+            elif settings_choice == "3":
+                change_color("Exit_Color")
+            elif settings_choice == "4":
+                change_color("Error_Color")
+            elif settings_choice == "5":
+                change_color("Wait_Color")
             elif settings_choice == "0":
                 return
             else:
                 clear()
-                Write.Print("[!] > Invalid input.\n", default_color, interval=0)
+                Write.Print(" Invalid input.\n", Error_Color, interval=0)
 
         except KeyboardInterrupt:
             clear()
-            Write.Print("[!] > Exiting on user request...\n", default_color, interval=0)
+            Write.Print("  Exiting on user request...\n", Exit_Color, interval=0)
             exit()
 
 if __name__ == "__main__":
