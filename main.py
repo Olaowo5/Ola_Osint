@@ -2410,23 +2410,24 @@ def main():
                 Write.Print(" Email Raw Data Search \n", Head_Color, interval=0)
 
                 press_zero()
-                
-               
-                
-                while True:
-                    email_data = capture_email_input()
+                email_data = capture_email_input()
 
-                    if email_data is None:
+                if email_data is None:
                         zero_pressed()  # Call the zeroPress function when input is canceled
                         continue
-                    if not email_data.strip():
+                if not email_data.strip():
                         print(" No email data provided.\n")
                         continue
 
-                    try:
-                        analyze_email_raw_data(email_data)
-                    except Exception as e:
-                        print(f"An error occurred while analyzing the email data: {e}")
+                try:
+                    analyze_email_raw_data(email_data)
+                except Exception as e:
+                    print(f"An error occurred while analyzing the email data: {e}")
+                
+               
+                
+                
+                    
 
             elif choice == "9":
                 clear()
