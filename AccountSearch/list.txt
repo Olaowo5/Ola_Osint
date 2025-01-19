@@ -244,6 +244,7 @@ http://www.wikidot.com/user:info/{}
 https://erome.com/{}
 https://www.alik.cz/u/{}
 https://rblx.trade/p/{}
+https://imgur.com/user/{username}
 https://www.paypal.com/paypalme/{}
 https://hackaday.io/{}
 https://connect.garmin.com/modern/profile/{}

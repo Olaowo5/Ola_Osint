@@ -46,6 +46,12 @@ import wave
 from mutagen.oggvorbis import OggVorbis
 from tinytag import TinyTag
 
+import trio
+import httpx
+
+import importlib
+
+
 
 
 
@@ -59,8 +65,31 @@ CX = "509f2c6d7178d43ea"  #"ENTER GOOGLE CUSTOM SEARCH CX HERE"
 
 HIBP_API_KEY =  "b6e4b60bbcfa4bc9b8fb8a714966c372" #"ENTER HAVE I BEEN PWNED API KEY HERE"
 
+
+def read_settings():
+    #Load settings from a JSON file.
+    filename = "Settings/Colorcode.json"
+    if os.path.exists(filename):
+        with open(filename, 'r') as file:
+            return json.load(file)
+    return {}
+
+def write_settings(settings):
+    #Save the settings to a JSON file.
+    with open('Settings/Colorcode.json', 'w') as file:
+        json.dump(settings, file)
+
+
 def clear():
     os.system('cls' if os.name == 'nt' else 'clear')
+
+def waitmsg(msg):
+    
+    if(msg == ""):
+        Write.Print("\n \U0001F422  Please wait while we process your request...\n", Colors.green, interval=0)
+    else:
+        clear()
+        Write.Print(f"\n \U0001F422  {msg}\n", Colors.green, interval=0)
 
 def press_zero():
      Write.Print("\n \u26A0  Press 0 and enter to cancel \n", Exit_Color, interval=0)
@@ -168,6 +197,8 @@ def test_person_search():
 
 def person_search(first_name, last_name, city):
 
+    waitmsg(f"Searching for {first_name} {last_name} in {city}...")
+
     if not API_KEY or not CX:
         ErrorString = ""
         if not API_KEY and not CX:       
@@ -243,6 +274,8 @@ def person_search(first_name, last_name, city):
 
 def ip_info(ip):
     url = f"https://ipinfo.io/{ip}/json"
+
+    waitmsg(f"Retrieving IP address info with {ip} ...")
     try:
         response = requests.get(url)
         response.raise_for_status()
@@ -339,6 +372,9 @@ def load_sites_from_file():
         return []
     
 def account_search(nickname):
+
+    waitmsg(f"Searching for social media accounts with {nickname}...")
+
     sites = load_sites_from_file()
 
     urls = []
@@ -358,6 +394,8 @@ def account_search(nickname):
     restart()
 
 def phone_info(phone_number):
+
+    waitmsg(f"Retrieving phone number info with {phone_number}...")
     try:
         parsed_number = phonenumbers.parse(phone_number)
         country = geocoder.country_name_for_number(parsed_number, "en")
@@ -390,6 +428,9 @@ def phone_info(phone_number):
     restart()
 
 def dns_lookup(domain):
+
+    waitmsg(f"Retrieving DNS records for {domain}...")
+
     record_types = ['A', 'CNAME', 'MX', 'NS']
     result_output = f"""
 
@@ -415,6 +456,8 @@ def dns_lookup(domain):
 
         result_output += f"|{'='*80}|\n"
 
+    result_output += whois_lookup(domain)
+
     clear()
     Write.Print(result_output, Colors.white, interval=0)
 
@@ -437,6 +480,9 @@ def format_mx_records(mx_records, max_width):
         return ["None"]
     
 def email_lookup(email_address):
+
+    waitmsg(f"Retrieving email address info with {email_address}...")
+
     try:
         v = validate_email(email_address)
         email_domain = v.domain
@@ -466,20 +512,99 @@ def email_lookup(email_address):
 
 
     email_text = f"""
-            ╭─{'─'*78}─╮
+            
             │{'Email Info':^80}│
             │{'='*80}│
             │  Email:        ││ {'':<1} {email_address:<57}│
             │  Domain:       ││ {'':<1} {email_domain:<57}│
             {mx_records_text}
             │  Validity:     ││ {'':<1} {validity:<57}│
-            ╰─{'─'*80}─╯
+            
             """
     Write.Print(email_text, Colors.white, interval=0)
+
+    #print("\n Test Phil \n")
+    #email_Phlint(email_address)
+    
 
     save_choice = save_message()
     if save_choice == 'y':
         save_details(email_text, "Email_LookUp")
+    restart()
+
+def email_Phlint(emailada):
+    
+    waitmsg(f"Retrieving accounts attached to email {emailada}...")
+    results = []  # Shared list to store results
+    logresult = ""
+    def read_services_from_file(file_path):
+        with open(file_path, 'r') as file:
+            services = [line.strip() for line in file if line.strip()]
+        return services
+    
+    async def perform_check(service_function, email, client, results):
+        out = []
+        try:
+            await service_function(email, client, out)
+
+            for result in out:
+                if result["exists"]:
+                    results.append(
+                        f"| {result['name']:<15} || ({result['domain']:15}) |  \u2705 Email exists |\n"
+                    )
+                #else:
+                #    results.append(
+                #        f"| {result['name']:<31} || ({result['domain']:20}) |  Email does not exist |\n"
+                #    )
+
+        except Exception as e:
+            results.append(
+                f"| {service_function.__name__:<20} || (N/A) | error: {str(e):<32} |\n"
+            )
+
+    async def holehe(email):
+        services_file = 'AccountSearch/services.txt'  # Path to your text file containing service module paths
+        services = read_services_from_file(services_file)
+
+        async with httpx.AsyncClient() as client:
+            # Use a Trio nursery to run concurrent operations
+            async with trio.open_nursery() as nursery:
+                for service_path in services:
+                    module_name = service_path.split('.')[-1]
+                    try:
+                        module = importlib.import_module(service_path)
+                        service_function = getattr(module, module_name)
+                        nursery.start_soon(perform_check, service_function, email, client, results)
+                    except (ModuleNotFoundError, AttributeError) as e:
+                        results.append(
+                            f"| {module_name:<15} || (N/A)| error: {str(e):<42} |\n"
+                        )
+
+        # After all tasks complete, print results
+        header = (
+            f"│{'Email Accounts Info':^80}│\n"
+            f"│{'='*80}│\n"
+            f"│  Email:        ││ {'':<1} {email:<57}│\n"
+            f"├{'─'*78}┤\n"
+        )
+
+        #print(header)
+        logresult = header
+        for result in results:
+            #print(result)
+            logresult+= result
+        #print(f"╰─{'─'*78}─╯")
+        logresult += (f"╰─{'─'*78}─╯")
+
+        Write.Print(logresult, Colors.white, interval=0)
+
+        save_choice = save_message()
+        if save_choice == 'y':
+            save_details(logresult, "Email_Accounts_LookUp")
+
+    trio.run(holehe, emailada)
+
+    
     restart()
 
 def capture_email_input():
@@ -499,8 +624,9 @@ def capture_email_input():
     return raw_data
 
 
-
 def analyze_email_raw_data(raw_data):
+ 
+ waitmsg("Analyzing email raw data...")
  try:
         # Parse the raw email data using a robust email parser
         msg = message_from_string(raw_data, policy=default)
@@ -511,7 +637,7 @@ def analyze_email_raw_data(raw_data):
         subject_ = msg.get("Subject", "")
         date_ = msg.get("Date", "")
 
-        print("Debug:", f"From: {from_}, To: {to_}, Subject: {subject_}, Date: {date_}")
+        #print("Debug:", f"From: {from_}, To: {to_}, Subject: {subject_}, Date: {date_}")
 
         received_lines = msg.get_all("Received", [])
         found_ips = []
@@ -616,6 +742,7 @@ def analyze_email_raw_data(raw_data):
  restart()
 
 def haveibeenpwned_check(email):
+    waitmsg(f"Checking Have I Been Pwned for {email}...")
     headers = {
         "hibp-api-key": HIBP_API_KEY,
         "User-Agent": "ClatScope-Info-Tool"
@@ -746,9 +873,10 @@ def change_color():
     restart()
 
 def whois_lookup(domain):
+    who_summary = ""
     try:
         w = whois.whois(domain)  # Assuming 'whois' is correctly initialized
-        clear()
+        #clear()
 
         domain_name = w.domain_name if w.domain_name else "N/A"
         registrar = w.registrar if w.registrar else "N/A"
@@ -793,17 +921,21 @@ def whois_lookup(domain):
 {format_wrapped_lines(wrapped_status, "Status")}
 
 """
-        Write.Print(whois_text, Colors.white, interval=0)
+        #Write.Print(whois_text, Colors.white, interval=0)
 
-        save_choice = save_message()
-        if save_choice == 'y':
-            save_details(whois_text, "Domain_LookUp")
+        #save_choice = save_message()
+        #if save_choice == 'y':
+        #    save_details(whois_text, "Domain_LookUp")
+
+        who_summary = whois_text
 
     except Exception as e:
-        clear()
-        Write.Print(f" \u2620  WHOIS lookup error: {str(e)}", default_color, interval=0)
+        #clear()
+        #Write.Print(f" \u2620  WHOIS lookup error: {str(e)}", default_color, interval=0)
+        who_summary = f" \u2620  WHOIS lookup error: {str(e)}"
 
-    restart()
+    #restart()
+    return who_summary
 
 def pass_strength(password):
     
@@ -862,10 +994,9 @@ def pass_strength(password):
 
     return scoreboard    
 
-
-
 def check_password(password=None):
-    clear() 
+    #clear()
+    waitmsg("Checking password strength...") 
     if not password:
         clear()
         Write.Print(" Password cannot be empty Please enter the password.\n", default_color, interval=0)
@@ -952,7 +1083,7 @@ def generate_html_report(username, found_sites):
 
 def username_check(username=None):
     clear()
-   
+    waitmsg("Checking username on multiple sites...")
     if not username:
         clear()
         Write.Print("\u2620 > No username provided.\n", Error_Color, interval=0)
@@ -1015,6 +1146,8 @@ def reverse_phone_lookup(phone_number):
         'num': 5
     }
 
+    waitmsg(f"Searching for phone number info with {phone_number}...")
+
     results_data = []
     try:
         response = requests.get(url, params=params, timeout=10)
@@ -1064,6 +1197,8 @@ def reverse_phone_lookup(phone_number):
 def check_ssl_cert(domain):
     clear()
     Write.Print("SSL Certificate Search\n", Head_Color, interval=0)
+
+    waitmsg(f"Checking for SSL Certificate {domain} ...")
     try:
         context = ssl.create_default_context()
         with socket.create_connection((domain, 443), timeout=10) as sock:
@@ -1122,6 +1257,7 @@ def check_robots_and_sitemap(domain):
 |   Domain:    {domain:<66}|
 |{'-'*80}|
 """
+    waitmsg(f"Check Robots and Sitemap from {domain}....")
 
     for resource_url in urls:
         try:
@@ -1157,8 +1293,9 @@ def check_robots_and_sitemap(domain):
 
 def check_dnsbl(ip_address):
     
-    Write.Print(" \U0001F422 Checking whether the IP is listed in common DNS blacklists (DNSBLs) ",
-                Colors.green,interval=0)
+   
+    waitmsg(f"Checking whether the IP{ip_address} is listed in common DNS blacklists (DNSBLs)")
+
     dnsbl_list = [
         "zen.spamhaus.org",
         "bl.spamcop.net",
@@ -1209,6 +1346,8 @@ def fetch_webpage_metadata(url):
     headers = {
         "User-Agent": "Mozilla/5.0"
     }
+
+    waitmsg(f" Checking {url} web metadata")
     try:
         resp = requests.get(url, headers=headers, timeout=10)
         resp.raise_for_status()
@@ -1244,8 +1383,8 @@ def fetch_webpage_metadata(url):
 def read_file_metadata(file_path):
 
     file_path = file_path.strip().strip('"').strip("'")
-    clear()
-    Write.Print(f"\U0001F422 Checking File Data\n {file_path}", Colors.green, interval=0)
+    
+    waitmsg(f"Checking MetaData 0f \n {file_path} ...")
 
     def timeConvert(atime):
         dt = atime
@@ -1586,6 +1725,8 @@ def hudson_rock_email():
 
     emaila = Write.Input("\U0001F989 Enter email to check infection status: ", default_color, interval=0)
 
+    waitmsg(f"Checking email {emaila} Infection status")
+
     try:
         v = validate_email(emaila)
         emailrs = v.email
@@ -1682,7 +1823,7 @@ def hudson_rock_domain():
         Write.Print("\u2620 No domain provided.\n", Error_Color, interval=0)
         restart()
         return
-   
+    waitmsg(f"Checking Infection status of {domainola}");
     try:
         url = "https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-domain"
         params = {"domain": domainola}
@@ -1891,6 +2032,8 @@ def hudson_rock_username():
             Write.Print(" No username provided.\n", Error_Color, interval=0)
             restart()
             return
+        
+        waitmsg(f"Checking for infection status of username {username}")
         try:
             url = "https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-username"
             params = {"username": username}
@@ -1964,6 +2107,7 @@ def hudson_rock_ip():
         Write.Print("\u2620 > No IP provided.\n", Error_Color, interval=0)
         restart()
         return
+    waitmsg(f"Checking Ip Address {ip_address} for infection status")
     try:
         url = "https://cavalier.hudsonrock.com/api/json/v2/osint-tools/search-by-ip"
         params = {"ip": ip_address}
@@ -2028,8 +2172,6 @@ def hudson_rock_ip():
         Write.Print(f"[!] > Error: {str(e)}", default_color, interval=0)
     restart()
 
-
-
 def Front_Page():
 
             T = "OLA" #input("Enter Text you want to convert to ASCII art : ")
@@ -2045,8 +2187,6 @@ def Front_Page():
                   
             author = "🛡️ By Olamide Owolabi - Hello World! 🛡️"
             Write.Print(author + "\n[C.I.T]\n OSint Info Tool\n", Colors.white, interval=0)
-
-
 
 
 
@@ -2067,10 +2207,10 @@ def main():
 ║ [3]  │ Phone Search           │ Retrieves phone number info                ║
 ║ [4]  │ DNS Search             │ Retrieves DNS records (A, CNAME, MX, NS)   ║
 ║ [5]  │ Email Search           │ Retrieves MX info for an email             ║
-║ [6]  │ Person Name Search     │ Retrieves extensive person-related data    ║
+║ [6]  │ Email Search Accounts  │ Retrieves MX info for an email             ║
+║ [7]  │ Person Name Search     │ Retrieves extensive person-related data    ║
 ║ [8]  │ Email Header Search    │ Retrieves info from an email header        ║
 ║ [9]  │ Email Breach Search    │ Retrieves email data breach info (HIBP)    ║
-║ [10] │ Domain Search          │ Retrieves domain registration data         ║
 ║ [11] │ Password Analyzer      │ Retrieves password strength rating         ║
 ║ [12] │ Username Search        │ Retrieves usernames from online accounts   ║
 ║ [13] │ Reverse Phone Search   │ Retrieves references to a phone number     ║
@@ -2185,6 +2325,24 @@ def main():
 
             elif choice == "6":
                 clear()
+                Write.Print(" Email to Registered Accounts Search \n", Head_Color, interval=0)
+
+                press_zero()
+                email = Write.Input(" \U0001F989 Enter a valid Email: ", default_color, interval=0)
+
+                if email == "0":
+                   clear()
+                   zero_pressed()
+                   continue
+
+                if not email:
+                    clear()
+                    Write.Print("[!] > Enter email\n", default_color, interval=0)
+                    continue
+                email_Phlint(email)    
+
+            elif choice == "7":
+                clear()
                 Write.Print(" Person Search with location \n", Head_Color, interval=0)
                 press_zero()
 
@@ -2232,8 +2390,6 @@ def main():
                     except Exception as e:
                         print(f"An error occurred while analyzing the email data: {e}")
 
-               
-
             elif choice == "9":
                 clear()
                 Write.Print(" Email Breach Check\n", Head_Color, interval=0)
@@ -2250,24 +2406,7 @@ def main():
                     Write.Print("[!] > Enter email\n", default_color, interval=0)
                     continue
                 haveibeenpwned_check(email)
-
-            elif choice == "10":
-                clear()
-                Write.Print(" Domain  lookup\n", Head_Color, interval=0)
-                press_zero()
-                domain = Write.Input("\U0001F989 Enter a Domain: ", default_color, interval=0)
-
-                if domain == "0":
-                    clear()
-                    zero_pressed()
-                    continue
-
-                if not domain:
-                    clear()
-                    Write.Print("[!] > Enter a domain\n", default_color, interval=0)
-                    continue
-                whois_lookup(domain)
-
+     
             elif choice == "11":
                 Write.Print(" Password  Checker\n", Head_Color, interval=0)
                 press_zero()
@@ -2428,7 +2567,7 @@ def main():
 
             elif choice == "0":
                 clear()
-                Write.Print("\n  Exiting...", Error_Color, interval=0)
+                Write.Print("\n \U0001F6AA Exiting...", default_color, interval=0)
                 exit()
 
             elif choice == "99":
