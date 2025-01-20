@@ -1,6 +1,6 @@
 # Ola Osint Tool
 
-**Ola Osint** is an Open Source Intelligence (OSINT) tool created for educational purposes, inspired by Clatscope. It gathers information across various factors utilizing multiple APIs and databases like Holehe, WHOIS, Have I Been Pwned, Google Search Engine API, and [HudsonRock](https://github.com/hudsonrock-partnerships).
+**Ola Osint** is an Open Source Intelligence (OSINT) tool created for educational purposes in python, inspired by Clatscope. It gathers information across various factors utilizing multiple APIs and databases like Holehe, WHOIS, Have I Been Pwned, Google Search Engine API, and [HudsonRock](https://github.com/hudsonrock-partnerships).
 
 ## Features
 
@@ -25,7 +25,7 @@
 
 - **Password Analyzer**: Assesses password strength and checks if it appears in data breaches using the Have I Been Pwned API.
 
-- **Username Search**: Searches for accounts associated with a username using the WhatsMyName repository.
+- **Username Search**: Searches for accounts associated with a username using the [WhatsMyName](https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json) repository.
 
 - **Reverse Phone Search**: Uses the Google Search Engine API to retrieve detailed information about a phone number.
 
@@ -49,6 +49,13 @@
 - **Google API** and **Search Engine API**: Required for Person Name Lookup.
 - **Have I Been Pwned API**: Required for Email Breach Check.
     ![API enter](Images/api_keys.png)
+
+## Installation
+```
+git clone https://github.com/Olaowo5/Ola_Osint.git
+cd Ola_Osint
+run the command [pip install -r requirements.txt ] in bash, command prompt or powershell
+```
 
 
 ## Inspiration
