@@ -5,6 +5,7 @@
 ## Features
 
 - **IP Address Lookup**: Provides geolocation and reverse DNS details for IP addresses.
+-    ![Ip_Lookup](Images/Ip_Address.png)
 
 - **Username Lookup**: Checks if a specified username exists within web accounts listed in `AccountSearch/list.txt`.
 
