@@ -1,6 +1,6 @@
 # Ola Osint Tool
 
-**Ola Osint** is an Open Source Intelligence (OSINT) tool created for educational purposes, inspired by [ClatScope](https://github.com/Clats97/ClatScope). It gathers information across various factors utilizing multiple APIs and databases like Holehe, WHOIS, Have I Been Pwned, Google Search Engine API, and [HudsonRock](https://github.com/hudsonrock-partnerships).
+**Ola Osint** is an Open Source Intelligence (OSINT) tool created for educational purposes, inspired by Clatscope. It gathers information across various factors utilizing multiple APIs and databases like Holehe, WHOIS, Have I Been Pwned, Google Search Engine API, and [HudsonRock](https://github.com/hudsonrock-partnerships).
 
 ## Features
 
@@ -48,6 +48,8 @@
 ## Dependencies
 - **Google API** and **Search Engine API**: Required for Person Name Lookup.
 - **Have I Been Pwned API**: Required for Email Breach Check.
+    ![API enter](Images/api_keys.png)
+
 
 ## Inspiration
 Inspired by [ClatScope](https://github.com/Clats97/ClatScope) and [Holehe](https://github.com/megadose/holehe).
