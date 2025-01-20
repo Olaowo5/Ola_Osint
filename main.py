@@ -50,6 +50,7 @@ import trio
 import httpx
 
 import importlib
+import time
 
 
 
@@ -175,8 +176,10 @@ def get_ip_details(ip):
 
 def fetch_page_text(url, max_length=500):
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
-    }
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.9",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+        }
     try:
         print(f"Fetching content from {url}")
         resp = requests.get(url, headers=headers, timeout=20)
@@ -337,11 +340,45 @@ def ip_info(ip):
 
 def fetch_social_urls(urls, title):
     def check_url(url):
+        headers = {
+           
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/104.0.0.0 Safari/537.36",
+        }
         try:
-            response = requests.get(url, timeout=10)
+            response = requests.get(url, headers=headers, timeout=10, allow_redirects=True)
             status_code = response.status_code
+            
             if status_code == 200:
-                return f"\u2714 > {url:<50}|| Found"
+                soup = BeautifulSoup(response.content, 'html.parser')
+                page_text = soup.get_text(separator=' ').strip().lower()
+
+               
+
+                
+                words = [word for word in page_text.split() if word]
+
+                if url == "https://tiktok.com/@olaowo5":
+                 print(f"Content of {url}:\n{page_text}")
+                
+               
+                if 'tiktok' not in url and len(words) < 10:
+                    return f"\u2718 > {url:<50}|| Possibly empty or trivial content"
+                
+                error_phrases = [
+                      "page does not exist", "page is not available", "sorry",
+                    "is still available", "404", "lost this page",
+                    "not be found", "cant find", "not found", "user not",
+                    "oops", "bad request", "removed", "broken" "try again",
+                    "we'll try your destination again in 15 seconds",
+                    "just a moment...", "page not found", "enable javascript", 
+                    "unable to load", "blocked by your firewall" ,
+                    "user does not exist", "no user with id","encountered an error"
+                ]
+                
+                if any(keyword in page_text for keyword in error_phrases):
+                    return f"\u2718 > {url:<50}|| Page not loaded properly (content)"
+                else:
+                    return f"\u2714 > {url:<50}|| Found "
             elif status_code == 404:
                 return f"\u2718 > {url:<50}|| Not found"
             else:
@@ -352,8 +389,9 @@ def fetch_social_urls(urls, title):
             return f"\u2718 > {url:<50}|| Connection error"
         except requests.exceptions.RequestException:
             return f"\u2718 > {url:<50}|| Request error"
-        except Exception:
-            return f"\u2718 > {url:<50}|| Unexpected error"
+        except Exception as e:
+            return f"\u2718 > {url:<50}|| Unexpected error: {str(e)}"
+
 
     result_str = f"""
 
@@ -362,6 +400,8 @@ def fetch_social_urls(urls, title):
 """
     with ThreadPoolExecutor() as executor:
         results = list(executor.map(check_url, urls))
+        time.sleep(0.5)  # Adjust sleep time as needed
+
     
     found = [result for result in results if "Found" in result]
     not_found = [result for result in results if "Found" not in result]
@@ -373,9 +413,9 @@ def fetch_social_urls(urls, title):
     return result_str
 
 def load_sites_from_file():
-    """Load sites from a text file, each line representing a URL pattern."""
+    # Load URL patterns with placeholders from a text file.
+    file_path = "AccountSearch/list.txt"
     try:
-        file_path ="AccountSearch/list.txt"
         with open(file_path, 'r', encoding='utf-8') as file:
             sites = [line.strip() for line in file if line.strip()]
         return sites
@@ -391,8 +431,10 @@ def account_search(nickname):
 
     urls = []
     for site_format in sites:
-        if '{}' in site_format:
-            url = site_format.format(nickname)
+        if '{target}' in site_format:
+            url = site_format.replace('{target}', nickname)
+        elif '{}' in site_format:
+            url = site_format.format(nickname)    
         else:
             url = site_format.rstrip('/') + '/' + nickname
         urls.append(url)

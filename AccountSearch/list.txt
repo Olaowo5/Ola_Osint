@@ -1,5 +1,5 @@
 https://google.com/{}
-https://youtube.com/@{}
+https://www.youtube.com/@{}
 https://facebook.com/{}
 https://wikipedia.org/wiki/User:{}
 https://instagram.com/{}
@@ -14,12 +14,10 @@ https://whatsapp.com/{}
 https://yahoo.com/{}
 https://amazon.com/{}
 https://duckduckgo.com/{}
-https://yahoo.co.jp/{}
-https://tiktok.com/@{}
+https://www.tiktok.com/@{}
 https://msn.com/{}
 https://netflix.com/{}
 https://weather.com/{}
-https://live.com/{}
 https://naver.com/{}
 https://microsoft.com/{}
 https://twitch.tv/{}
@@ -47,7 +45,6 @@ https://merriam-webster.com/{}
 https://hurriyet.com.tr/{}
 https://steamcommunity.com/id/{}
 https://booking.com/{}
-https://support.google.com/{}
 https://bbc.com/{}
 https://playstation.com/{}
 https://ebay.com/usr/{}
@@ -111,15 +108,13 @@ https://pypi.org/user/{}
 https://slideshare.com/{}
 https://strava.com/athletes/{}
 https://tldrlegal.com/{}
-https://t.me/{}
 https://last.fm/user{}
 https://data.typeracer.com/pit/profile?user={}
 https://tryhackme.com/p/{}
 https://trakt.tv/users/{}
 https://scratch.mit.edu/users/{}
-https://replit.com?{}
 https://hackaday.io/{}
-https://freesound.org/people{{
+https://freesound.org/people{}
 https://hub.docker.com/u/{}
 https://disqus.com/{}
 https://www.codecademy.com/profiles/{}
@@ -127,8 +122,6 @@ https://www.chess.com/member/{}
 https://bitbucket.org/{}
 https://www.twitch.tv?{}
 https://wikia.com/wiki/User:{}
-https://steamcommunity.com/groups{}
-https://keybase.io?{}
 http://en.gravatar.com/{}
 https://vk.com/{}
 https://deviantart.com/{}
@@ -244,7 +237,6 @@ http://www.wikidot.com/user:info/{}
 https://erome.com/{}
 https://www.alik.cz/u/{}
 https://rblx.trade/p/{}
-https://imgur.com/user/{username}
 https://www.paypal.com/paypalme/{}
 https://hackaday.io/{}
 https://connect.garmin.com/modern/profile/{}
