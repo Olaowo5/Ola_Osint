@@ -828,12 +828,12 @@ def haveibeenpwned_check(email):
 ╭─{' '*78}─╮
 |{' '*30}Have I Been Pwned?{' '*30}|
 |{'='*80}|
-|  Bad news! Your email was found in {len(breaches)} breach(es)                          |
+|  Bad news! Your email {email} was found in {len(breaches)} breach(es)                          |
 |{'-'*80}|
 """
             max_width = 70  # Define a constant width for the content
             separator = f"|{'=' * (max_width + 12)}|\n"
-            results_text = separator
+            results_text += separator
 
             for index, breach in enumerate(breaches, start=1):
                 breach_name = breach.get('Name', 'Unknown')
