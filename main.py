@@ -67,7 +67,22 @@ CX = "ENTER GOOGLE CUSTOM SEARCH CX HERE"
 
 HIBP_API_KEY = "ENTER HAVE I BEEN PWNED API KEY HERE"
 
-
+def load_api_keys(file_path):
+    global API_KEY, CX, HIBP_API_KEY
+    try:
+        with open(file_path, 'r') as file:
+            for line in file:
+                key, value = line.strip().split('=', 1)
+                if key == "API_KEY":
+                    API_KEY = value.strip()
+                elif key == "CX":
+                    CX = value.strip()
+                elif key == "HIBP_API_KEY":
+                    HIBP_API_KEY = value.strip()
+    except FileNotFoundError:
+        pass
+    except Exception as e:
+      pass
 def read_settings():
     #Load settings from a JSON file.
     filename = "Settings/Colorcode.json"
@@ -2273,7 +2288,7 @@ def main():
     while True:
         try:
             clear()
-
+            load_api_keys("Apik.txt")
             load_default_colors()
             Front_Page()
             
