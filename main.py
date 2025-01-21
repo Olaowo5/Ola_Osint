@@ -613,12 +613,16 @@ def email_Phlint(emailada):
     
     async def perform_check(service_function, email, client, results):
         out = []
+        good_results = []
+        bad_results = []
+
         try:
             await service_function(email, client, out)
+           
 
             for result in out:
                 if result["exists"]:
-                    results.append(
+                    good_results.append(
                         f"| {result['name']:<15} || ({result['domain']:15}) |  \u2705 Email exists |\n"
                     )
                 #else:
@@ -627,9 +631,13 @@ def email_Phlint(emailada):
                 #    )
 
         except Exception as e:
-            results.append(
+            bad_results.append(
                 f"| {service_function.__name__:<20} || (N/A) | error: {str(e):<32} |\n"
             )
+            
+            
+        results.extend(good_results)
+        results.extend(bad_results)
 
     async def holehe(email):
         services_file = 'AccountSearch/services.txt'  # Path to your text file containing service module paths
