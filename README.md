@@ -2,6 +2,8 @@
 
 **Ola Osint** is an Open Source Intelligence (OSINT) tool created for educational purposes in python, inspired by Clatscope. It gathers information across various factors utilizing multiple APIs and databases like Holehe, WHOIS, Have I Been Pwned, Google Search Engine API, and [HudsonRock](https://github.com/hudsonrock-partnerships).
 
+ ![title](Images/title.png)
+
 ## Features
 
 - **IP Address Lookup**: Provides geolocation and reverse DNS details for IP addresses.
